@@ -19,7 +19,7 @@ public class FilmController {
     }
 
     @PostMapping
-    public Film create(@Valid @RequestBody Film film) throws Exception {
+    public Film create(@Valid @RequestBody Film film) {
         if (films.contains(film)) {
             log.info("Film \"{}\" doesn't be saved, 'cause  is already exist\n", film.getName());
             throw new IllegalArgumentException("FilmAlreadyExistException");
@@ -33,7 +33,7 @@ public class FilmController {
     }
 
     @PutMapping
-    public Film update(@Valid @RequestBody Film film) throws Exception {
+    public Film update(@Valid @RequestBody Film film) {
         if (!films.contains(film)) {
             log.info("Film doesn't be updated, 'cause It has wrong ID\n");
             throw new IllegalArgumentException("ThereIsNoSuchFilmException");
