@@ -13,7 +13,7 @@ class FilmControllerTest {
     private final FilmController controller = new FilmController();
 
     @Test
-    public void shouldCreateAndUpdateValidUsersById() throws Exception {
+    public void shouldCreateAndUpdateValidUsersById() {
         Film film = new Film(
                 "Public Enemies", "about public enemies",
                 LocalDate.of(2009, 12, 8), 200);
@@ -38,7 +38,7 @@ class FilmControllerTest {
     }
 
     @Test
-    public void shouldThrowExceptions() throws Exception {
+    public void shouldThrowExceptions() {
         Film film = new Film(
                 "Public Enemies", "about public enemies",
                 LocalDate.of(2009, 12, 8), 200);
@@ -52,6 +52,4 @@ class FilmControllerTest {
         assertThrows(IllegalArgumentException.class, () -> controller.update(filmToUpdateWithWrongId));
 
     }
-
-
 }
