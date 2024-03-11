@@ -42,11 +42,7 @@ class FilmValidationTest {
         Set<ConstraintViolation<Film>> violationsDuration = validator.validate(filmWithWrongDuration);
         assertFalse(violationsDuration.isEmpty());
         //максимальная длина описания — 200 символов;
-        StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < 201; i++) {
-            stringBuilder.append("i");
-        }
-        String description = stringBuilder.toString();
+        String description = "i".repeat(201);
         Film filmWithWrongDescription = new Film(
                 "Public Enemies", description,
                 LocalDate.of(1999, 12, 28), 200);

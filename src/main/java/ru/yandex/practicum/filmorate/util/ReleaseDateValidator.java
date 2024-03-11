@@ -4,7 +4,7 @@ import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 import java.time.LocalDate;
 
-public class ReleaseDateValidator implements ConstraintValidator<ReleaseDate, LocalDate> {
+public class ReleaseDateValidator implements ConstraintValidator <ReleaseDate, LocalDate> {
     @Override
     public boolean isValid(final LocalDate valueToValidate, final ConstraintValidatorContext context) {
         return valueToValidate.isAfter(LocalDate.of(1985, 12, 27))
