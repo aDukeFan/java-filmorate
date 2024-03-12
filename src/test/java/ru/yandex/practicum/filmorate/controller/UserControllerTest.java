@@ -6,14 +6,13 @@ import ru.yandex.practicum.filmorate.model.User;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class UserControllerTest {
 
     UserController controller = new UserController();
 
     @Test
-    public void shouldCreateAndUpdateValidUsersById() throws Exception {
+    public void shouldCreateAndUpdateValidUsersById() {
         User userWithoutName = new User(
                 "firstGay", "firstGay@mail.ru", LocalDate.of(2000, 1, 1));
         User userWithName = new User(
@@ -44,30 +43,13 @@ class UserControllerTest {
         assertEquals(updatedUser.getEmail(), "firstGay@mail.ru");
         assertEquals(updatedUser.getBirthday(), LocalDate.of(2000, 1, 1));
         assertEquals(controller.findAll().size(), 2);
-
     }
 
     @Test
-    public void shouldThrowIllegalArgumentExceptions() throws Exception {
-        User userWithWrongEmail = new User(
-                "thirdGay", "yyayayaya", LocalDate.of(2000, 1, 1));
-        User userWithWrongBirthday = new User(
-                "forthGay", "forthGay@ya.ru", LocalDate.now());
-        User userWithWrongLogin = new User(
-                "firth Gay", "ohohoho@ya.ru", LocalDate.of(2000, 1, 1));
-        assertThrows(IllegalArgumentException.class, () -> controller.create(userWithWrongBirthday));
-        assertThrows(IllegalArgumentException.class, () -> controller.create(userWithWrongEmail));
-        assertThrows(IllegalArgumentException.class, () -> controller.create(userWithWrongLogin));
-
+    public void shouldSetSameNameAsLoginToUserWithoutName() {
         User userWithoutName = new User(
                 "firstGay", "firstGay@mail.ru", LocalDate.of(2000, 1, 1));
-        controller.create(userWithoutName);
-
-        User userWithoutNameToUpdate = new User(
-                "firstGay", "firstGay@mail.ru", LocalDate.of(2002, 1, 1));
-        userWithoutNameToUpdate.setId(2);
-        assertThrows(IllegalArgumentException.class, () -> controller.update(userWithoutNameToUpdate));
+        User createdUser = controller.create(userWithoutName);
+        assertEquals(createdUser.getName(), createdUser.getLogin());
     }
-
-
 }

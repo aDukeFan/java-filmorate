@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.time.LocalDate;
+import javax.validation.Valid;
 import java.util.HashSet;
 
 @RestController
@@ -20,31 +20,27 @@ public class UserController {
     }
 
     @PostMapping
-    public User create(@RequestBody User user) throws Exception {
-        if (isValidUser(user)) {
-            if (users.contains(user)) {
-                log.info("User: {} is not saved, 'cause already exist", user);
-                throw new IllegalArgumentException("UserAlreadyExistException");
-            } else {
-                int id = generateId();
-                user.setId(id);
-                users.add(user);
-                log.info("User: {} is successfully saved", user);
-            }
+    public User create(@Valid @RequestBody User user) {
+        if (users.contains(user)) {
+            log.info("User: {} is not saved, 'cause already exist", user);
+            throw new IllegalArgumentException("UserAlreadyExistException");
+        } else {
+            int id = generateId();
+            user.setId(id);
+            users.add(user);
+            log.info("User: {} is successfully saved", user);
         }
         return user;
     }
 
     @PutMapping
-    public User update(@RequestBody User user) throws Exception {
-        if (isValidUser(user)) {
-            if (!users.contains(user)) {
-                log.info("User: {} is not updated, 'cause bad ID", user);
-                throw new IllegalArgumentException("NoSuchUserException");
-            } else {
-                users.add(user);
-                log.info("User: {} is successfully updated", user);
-            }
+    public User update(@Valid @RequestBody User user) {
+        if (!users.contains(user)) {
+            log.info("User: {} is not updated, 'cause bad ID", user);
+            throw new IllegalArgumentException("NoSuchUserException");
+        } else {
+            users.add(user);
+            log.info("User: {} is successfully updated", user);
         }
         return user;
     }
@@ -53,26 +49,4 @@ public class UserController {
     public HashSet<User> findAll() {
         return users;
     }
-
-    private boolean isValidUser(User user) throws Exception {
-        if (user == null) {
-            throw new IllegalArgumentException("NoArgumentException");
-        }
-        String login = user.getLogin();
-        String email = user.getEmail();
-        LocalDate birthday = user.getBirthday();
-        if (login.isEmpty() || login.isBlank() || login.contains(" ")) {
-            throw new IllegalArgumentException("IncorrectLoginException");
-        }
-        if (email.isBlank()
-                || email.isEmpty()
-                || !(email.contains("@") && email.contains("."))) {
-            throw new IllegalArgumentException("IncorrectEmailException");
-        }
-        if (birthday.isAfter(LocalDate.now()) || birthday.equals(LocalDate.now())) {
-            throw new IllegalArgumentException("IncorrectBirthdayException");
-        }
-        return true;
-    }
-
 }

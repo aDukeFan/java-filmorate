@@ -22,13 +22,12 @@ public class Film {
     private String name;
     @Size(max = 200, message = "Description is too long (max 200 chars).")
     private String description;
-    @Past
     @ReleaseDate(message = "The date of release must be after 28 December 1985 and before now")
     private LocalDate releaseDate;
     @Positive(message = "Duration must be positive.")
-    private long duration;
+    private int duration;
 
-    public Film(String name, String description, LocalDate releaseDate, long duration) {
+    public Film(String name, String description, LocalDate releaseDate, int duration) {
         this.name = name;
         this.description = description;
         this.releaseDate = releaseDate;
