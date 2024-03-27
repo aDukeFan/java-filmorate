@@ -13,9 +13,9 @@ public interface FilmService {
 
     List<Film> findAll();
 
-    public Film addLike(int filmId, int userId);
+    Film addLike(int filmId, int userId);
 
-    public Film removeLike(int filmId, int userId);
+    Film removeLike(int filmId, int userId);
 
-    public List<Film> getTopPopularFilms(int count);
+    List<Film> getTopPopularFilms(int count);
 }

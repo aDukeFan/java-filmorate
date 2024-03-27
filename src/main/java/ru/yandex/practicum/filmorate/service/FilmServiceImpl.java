@@ -8,7 +8,6 @@ import ru.yandex.practicum.filmorate.ecxeption.RepeatException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -81,17 +80,8 @@ public class FilmServiceImpl implements FilmService {
     @Override
     public List<Film> getTopPopularFilms(int count) {
         return filmStorage.findAll().stream().filter(film -> !film.getLikes().isEmpty())
-                .sorted(new Comparator<Film>() {
-                    @Override
-                    public int compare(Film o1, Film o2) {
-                        if (o1.getLikes().size() > o2.getLikes().size()) {
-                            return -1;
-                        } else if (o1.getLikes().size() == o2.getLikes().size()) {
-                            return 0;
-                        } else {
-                            return 1;
-                        }
-                    }
+                .sorted((o1, o2) -> {
+                    return Integer.compare(o2.getLikes().size(), o1.getLikes().size());
                 })
                 .limit(count)
                 .collect(Collectors.toList());
