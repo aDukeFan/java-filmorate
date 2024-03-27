@@ -3,15 +3,18 @@ package ru.yandex.practicum.filmorate.model;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.experimental.Accessors;
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
-import java.util.Objects;
+import java.util.HashSet;
+import java.util.Set;
 
 
 @ToString
 @Getter
 @Setter
+@Accessors(chain = true)
 public class User {
     private int id;
     private String name;
@@ -24,24 +27,13 @@ public class User {
     private String login;
     @Past
     private LocalDate birthday;
+    private Set<Integer> friendsId = new HashSet<>();
 
-    public User(String login, String email, LocalDate birthday) {
-        this.name = login;
-        this.email = email;
-        this.login = login;
-        this.birthday = birthday;
+    public void addFriend(int id) {
+        friendsId.add(id);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof User)) return false;
-        User user = (User) o;
-        return id == user.id;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
+    public void removeFriend(int id) {
+        friendsId.remove(id);
     }
 }
