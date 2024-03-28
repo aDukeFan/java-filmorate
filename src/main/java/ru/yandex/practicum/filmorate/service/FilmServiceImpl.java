@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.ecxeption.NotFoundException;
 import ru.yandex.practicum.filmorate.ecxeption.RepeatException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
@@ -45,12 +44,7 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public Film addLike(int filmId, int userId) {
-        if (filmStorage.getById(filmId) == null) {
-            throw new NotFoundException("No film with such id");
-        }
-        if (userService.getById(userId) == null) {
-            throw new NotFoundException("No user with such id");
-        }
+        userService.getById(userId);
         Film film = filmStorage.getById(filmId);
         if (film.getLikes().contains(userId)) {
             throw new RepeatException("Like was already set");
@@ -62,12 +56,7 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public Film removeLike(int filmId, int userId) {
-        if (filmStorage.getById(filmId) == null) {
-            throw new NotFoundException("No film with such id");
-        }
-        if (userService.getById(userId) == null) {
-            throw new NotFoundException("No user with such id");
-        }
+        userService.getById(userId);
         Film film = filmStorage.getById(filmId);
         if (!film.getLikes().contains(userId)) {
             throw new RepeatException("No likes by user with same id");
@@ -79,10 +68,9 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public List<Film> getTopPopularFilms(int count) {
-        return filmStorage.findAll().stream().filter(film -> !film.getLikes().isEmpty())
-                .sorted((o1, o2) -> {
-                    return Integer.compare(o2.getLikes().size(), o1.getLikes().size());
-                })
+        return filmStorage.findAll().stream()
+                .filter(film -> !film.getLikes().isEmpty())
+                .sorted((o1, o2) -> Integer.compare(o2.getLikes().size(), o1.getLikes().size()))
                 .limit(count)
                 .collect(Collectors.toList());
     }
