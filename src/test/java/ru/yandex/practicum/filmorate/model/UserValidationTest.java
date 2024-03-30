@@ -23,12 +23,21 @@ class UserValidationTest {
 
     @Test
     public void shouldThrowIllegalArgumentExceptions() {
-        User userWithWrongEmail = new User(
-                "thirdGay", "yyayayaya", LocalDate.of(2000, 1, 1));
-        User userWithWrongBirthday = new User(
-                "forthGay", "forthGay@ya.ru", LocalDate.now());
-        User userWithWrongLogin = new User(
-                "firth Gay", "ohohoho@ya.ru", LocalDate.of(2000, 1, 1));
+        User userWithWrongEmail = new User()
+                .setLogin("thirdGay")
+                .setEmail("yyayayaya")
+                .setBirthday(LocalDate.of(2000, 1, 1));
+
+        User userWithWrongBirthday = new User()
+                .setLogin("forthGay")
+                .setBirthday(LocalDate.now())
+                .setEmail("forthGay@ya.ru");
+
+        User userWithWrongLogin = new User()
+                .setLogin("firth Gay")
+                .setEmail("ohohoho@ya.ru")
+                .setBirthday(LocalDate.of(2000, 1, 1));
+
         Set<ConstraintViolation<User>> violationsEmail = validator.validate(userWithWrongEmail);
         assertFalse(violationsEmail.isEmpty());
         Set<ConstraintViolation<User>> violationsBirthday = validator.validate(userWithWrongBirthday);

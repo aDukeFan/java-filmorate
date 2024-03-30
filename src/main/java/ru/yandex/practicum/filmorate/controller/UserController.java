@@ -1,52 +1,59 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
 
 import javax.validation.Valid;
-import java.util.HashSet;
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")
-@Slf4j
+@AllArgsConstructor
 public class UserController {
-    private final HashSet<User> users = new HashSet<>();
-
-    private int nextId = 1;
-
-    private int generateId() {
-        return nextId++;
-    }
+    private UserService userService;
 
     @PostMapping
     public User create(@Valid @RequestBody User user) {
-        if (users.contains(user)) {
-            log.info("User: {} is not saved, 'cause already exist", user);
-            throw new IllegalArgumentException("UserAlreadyExistException");
-        } else {
-            int id = generateId();
-            user.setId(id);
-            users.add(user);
-            log.info("User: {} is successfully saved", user);
-        }
-        return user;
+        return userService.create(user);
     }
 
     @PutMapping
     public User update(@Valid @RequestBody User user) {
-        if (!users.contains(user)) {
-            log.info("User: {} is not updated, 'cause bad ID", user);
-            throw new IllegalArgumentException("NoSuchUserException");
-        } else {
-            users.add(user);
-            log.info("User: {} is successfully updated", user);
-        }
-        return user;
+        return userService.update(user);
+    }
+
+    @GetMapping("/{id}")
+    public User getById(@PathVariable Integer id) {
+        return userService.getById(id);
     }
 
     @GetMapping
-    public HashSet<User> findAll() {
-        return users;
+    public List<User> findAll() {
+        return userService.findAll();
+    }
+
+    @PutMapping("/{userId}/friends/{friendId}")
+    public User addFriend(@PathVariable Integer userId,
+                          @PathVariable Integer friendId) {
+        return userService.addFriend(userId, friendId);
+    }
+
+    @DeleteMapping("/{userId}/friends/{friendId}")
+    public User removeFriend(@PathVariable Integer userId,
+                             @PathVariable Integer friendId) {
+        return userService.removeFriend(userId, friendId);
+    }
+
+    @GetMapping("/{id}/friends")
+    public List<User> findFriends(@PathVariable Integer id) {
+        return userService.getFriends(id);
+    }
+
+    @GetMapping("/{userId}/friends/common/{friendId}")
+    public List<User> findSameFriends(@PathVariable Integer userId,
+                                      @PathVariable Integer friendId) {
+        return userService.getSameFriends(userId, friendId);
     }
 }
