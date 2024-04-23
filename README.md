@@ -1,7 +1,6 @@
 # java-filmorate 
 ## Cоциальная сеть для киноманов
-
-![schema](C:\Users\svnof\dev\java-filmorate\postgres - public.gif)
+![схема](https://disk.yandex.ru/i/7I8HYVAVvbdUYw)
 ### Примеры запросов sql:
 * ####  Сохранить значения полей объекта в таблицу "example"
 ```oracle-plsql
