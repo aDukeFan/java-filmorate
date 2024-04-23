@@ -1,5 +1,6 @@
 # java-filmorate 
 ## Cоциальная сеть для киноманов
+![TablesDiagramDB](https://github.com/okidokiluckyloki/java-filmorate/assets/148979016/6433e8f2-f06a-43fe-a1e8-67ac6537ce3b)
 ### Примеры запросов sql:
 * ####  Сохранить значения полей объекта в таблицу "example"
 ```postgres-sql
