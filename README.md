@@ -1,6 +1,7 @@
 # java-filmorate 
 ## Cоциальная сеть для киноманов
-![schema](https://disk.yandex.ru/i/59G1473itKsYiw)
+
+![schema](C:\Users\svnof\dev\java-filmorate\postgres - public.gif)
 ### Примеры запросов sql:
 * ####  Сохранить значения полей объекта в таблицу "example"
 ```oracle-plsql
@@ -110,7 +111,8 @@ VALUES(?, ?)
 ```oracle-plsql
 DELETE 
 FROM likes 
-WHERE film_id = ? AND user_id = ?
+WHERE film_id = ? 
+  AND user_id = ?
 ````
 * ####  Получить топ id фильмов по лайкам
 ```oracle-plsql
@@ -118,19 +120,21 @@ SELECT film_id AS id
 FROM likes
 GROUP BY film_id
 ORDER BY COUNT(user_id) DESC
-LIMIT (?)
+LIMIT ?
 ````
 * ####  Узнать получил ли фильм лайк от конкретного пользователя
 ```oracle-plsql
 SELECT EXISTS (SELECT * 
                FROM likes
-               WHERE film_id = ? AND user_id = ?) AS match
+               WHERE film_id = ? 
+                 AND user_id = ?) AS match
 ````
 * ####  Узнать задан ли фильму сохраненному в БД рейтинг
 ```oracle-plsql
 SELECT EXISTS (SELECT rating_id
                FROM films
-               WHERE rating_id IS NOT NULL AND id = ?) AS match
+               WHERE rating_id IS NOT NULL 
+                 AND id = ?) AS match
 ````
 * ####  Узнать есть ли запрашиваемый id в таблице "tableName"
 ```oracle-plsql
@@ -171,7 +175,8 @@ VALUES(?, ?)
 ```oracle-plsql
 DELETE 
 FROM follows 
-WHERE following_id = ? AND followed_id = ?
+WHERE following_id = ? 
+  AND followed_id = ?
 ````
 * ####  получить общий подписчиков без их подписчиков (они же друзья)
 ```oracle-plsql
@@ -180,9 +185,9 @@ FROM users
 WHERE id IN (SELECT following_id 
              FROM follows 
              WHERE followed_id = ?)
-             AND id IN (SELECT following_id 
-                        FROM follows 
-                        WHERE followed_id = ?)
+  AND id IN (SELECT following_id 
+             FROM follows 
+             WHERE followed_id = ?)
 ````
 * ####  получить всех подписчиков пользователя по id (без подписок подписчиков
 ```oracle-plsql
