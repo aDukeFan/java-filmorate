@@ -1,6 +1,7 @@
 # java-filmorate 
 ## Cоциальная сеть для киноманов
-![схема](https://disk.yandex.ru/i/7I8HYVAVvbdUYw)
+![postgres - public](https://github.com/okidokiluckyloki/java-filmorate/assets/148979016/4a45225d-9ca9-415f-af36-ba47923b4e58)
+
 ### Примеры запросов sql:
 * ####  Сохранить значения полей объекта в таблицу "example"
 ```oracle-plsql
