@@ -124,7 +124,7 @@ class RepositoryTest {
     private List<Film> make3Films(FilmRepository filmRepository) {
         Film film1 = new Film()
                 .setId(1)
-                .setName("Фильм 1")
+                .setName("movie 1")
                 .setDescription("о чем-то там")
                 .setDuration(144)
                 .setReleaseDate(LocalDate.of(2000, 10, 10))
