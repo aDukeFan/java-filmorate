@@ -147,6 +147,7 @@ class RepositoryTest {
         filmRepository.create(film3);
         return List.of(film1, film2, film3);
     }
+
     private List<User> make3Users(UserRepository userRepository) {
         User user1 = new User()
                 .setName("Антошка")
