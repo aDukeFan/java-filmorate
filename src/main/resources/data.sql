@@ -1,9 +1,9 @@
 
-insert into ratings (name) values ('g');
-insert into ratings (name) values ('pg');
-insert into ratings (name) values ('pg13');
-insert into ratings (name) values ('r');
-insert into ratings (name) values ('nc17');
+insert into ratings (name) values ('G');
+insert into ratings (name) values ('PG');
+insert into ratings (name) values ('PG-13');
+insert into ratings (name) values ('R');
+insert into ratings (name) values ('NC-17');
 
 insert into genres (name) values ('comedy');
 insert into genres (name) values ('drama');

@@ -42,7 +42,7 @@ class RepositoryTest {
                 .setName("Фильм 1")
                 .setDescription("Режиссерская версия")
                 .setReleaseDate(LocalDate.of(2000, 11, 10))
-                .setMpa(new Rating().setId(4).setName("r"))
+                .setMpa(new Rating().setId(4).setName("R"))
                 .setDuration(166);
         repository.update(film1toUpdate);
         Film updatedFilm = repository.getById(1);
@@ -128,14 +128,14 @@ class RepositoryTest {
                 .setDescription("о чем-то там")
                 .setDuration(144)
                 .setReleaseDate(LocalDate.of(2000, 10, 10))
-                .setMpa(new Rating().setId(1).setName("g"));
+                .setMpa(new Rating().setId(1).setName("G"));
         Film film2 = new Film()
                 .setId(2)
                 .setName("Фильм 2")
                 .setDescription("о чем-то там")
                 .setDuration(155)
                 .setReleaseDate(LocalDate.of(2001, 10, 10))
-                .setMpa(new Rating().setId(4).setName("r"));
+                .setMpa(new Rating().setId(4).setName("R"));
         Film film3 = new Film()
                 .setId(2)
                 .setName("Фильм 3")

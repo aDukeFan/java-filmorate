@@ -38,14 +38,14 @@ public class FilmRepository {
         if (film.getMpa() != null) {
             Integer ratingId = film.getMpa().getId();
             throwValidationExceptionForNonExistentId(ratingId, "ratings");
-            String rating_name = template.queryForObject(
+            String ratingName = template.queryForObject(
                     "select name from ratings where id = ?",
                     (rs, rowNum) -> rs.getString("name"), ratingId);
-            film.getMpa().setName(rating_name);
+            film.getMpa().setName(ratingName);
             template.update(
                     "update films set rating_id = ? where id = ?",
                     ratingId, film.getId());
-            log.info("saved rating '{}' of the film to table 'films'", rating_name);
+            log.info("saved rating '{}' of the film to table 'films'", ratingName);
         }
         LinkedHashSet<Genre> genres = film.getGenres();
         if (!genres.isEmpty()) {
@@ -76,10 +76,10 @@ public class FilmRepository {
             template.update(
                     "update films set rating_id = ? where id = ?",
                     film.getMpa().getId(), film.getId());
-            String rating_name = template.queryForObject(
+            String ratingName = template.queryForObject(
                     "select name from ratings where id = ?",
                     (rs, rowNum) -> rs.getString("name"), film.getMpa().getId());
-            film.getMpa().setName(rating_name);
+            film.getMpa().setName(ratingName);
             log.info("update film's mpa in table 'films'");
         }
         LinkedHashSet<Genre> genres = film.getGenres();
