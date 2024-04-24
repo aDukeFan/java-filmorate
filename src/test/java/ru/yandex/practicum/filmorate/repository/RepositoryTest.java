@@ -23,7 +23,7 @@ class RepositoryTest {
     private final JdbcTemplate template;
 
     @Test
-    public void RepositoryTests() {
+    public void tests() {
         FilmRepository repository = new FilmRepository(template);
         List<Film> filmsBeforeSaved = make3Films(repository);
         List<Film> savedFilms = repository.findAll();
