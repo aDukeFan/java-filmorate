@@ -1,13 +1,13 @@
 
-insert into ratings (name) values (G);
-insert into ratings (name) values (PG);
-insert into ratings (name) values (PG-13);
-insert into ratings (name) values (R);
-insert into ratings (name) values (NC-17);
+insert into ratings (name) values (g);
+insert into ratings (name) values (pg);
+insert into ratings (name) values (pg-13);
+insert into ratings (name) values (r);
+insert into ratings (name) values (nc-17);
 
-insert into genres (name) values (Comedy);
-insert into genres (name) values (Drama);
-insert into genres (name) values (Cartoon);
-insert into genres (name) values (Thriller);
-insert into genres (name) values (Documentary);
-insert into genres (name) values (Action);
+insert into genres (name) values (comedy);
+insert into genres (name) values (drama);
+insert into genres (name) values (cartoon);
+insert into genres (name) values (thriller);
+insert into genres (name) values (documentary);
+insert into genres (name) values (action);
