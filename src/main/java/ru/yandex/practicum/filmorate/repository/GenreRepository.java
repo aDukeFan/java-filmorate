@@ -48,6 +48,7 @@ public class GenreRepository {
         throwNotFoundExceptionForNonExistentId(genreId);
         template.update("delete from genres where id = ?", genreId);
     }
+
     private RowMapper<Genre> genreRowMapper() {
         return (rs, rowNum) -> new Genre()
                 .setId(rs.getInt("id"))
