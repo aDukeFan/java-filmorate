@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.ecxeption;
+package ru.yandex.practicum.filmorate.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -6,5 +6,5 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class ErrorResponse {
-    String error;
+    private String error;
 }

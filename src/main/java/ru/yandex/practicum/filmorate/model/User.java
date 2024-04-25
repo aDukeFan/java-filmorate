@@ -7,16 +7,15 @@ import lombok.experimental.Accessors;
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
-
 
 @ToString
 @Getter
 @Setter
 @Accessors(chain = true)
 public class User {
-    private int id;
+    private Integer id;
     private String name;
     @NotNull
     @Email
@@ -27,13 +26,5 @@ public class User {
     private String login;
     @Past
     private LocalDate birthday;
-    private Set<Integer> friendsId = new HashSet<>();
-
-    public void addFriend(int id) {
-        friendsId.add(id);
-    }
-
-    public void removeFriend(int id) {
-        friendsId.remove(id);
-    }
+    private Set<Integer> friends = new LinkedHashSet<>();
 }

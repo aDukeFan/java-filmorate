@@ -13,6 +13,7 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class FilmValidationTest {
+
     private Validator validator;
 
     @BeforeEach

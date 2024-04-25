@@ -11,18 +11,15 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * Film.
- */
 @Getter
 @Setter
 @ToString
 @Accessors(chain = true)
 public class Film {
-    private int id;
+    private Integer id;
     @NotEmpty(message = "Name must be set")
     @NotNull(message = "Must have a name")
     private String name;
@@ -32,13 +29,7 @@ public class Film {
     private LocalDate releaseDate;
     @Positive(message = "Duration must be positive.")
     private int duration;
-    private Set<Integer> likes = new HashSet<>();
-
-    public void addLike(int id) {
-        likes.add(id);
-    }
-
-    public void removeLike(int id) {
-        likes.remove(id);
-    }
+    private Rating mpa;
+    private Set<Integer> likes = new LinkedHashSet<>();
+    private Set<Genre> genres = new LinkedHashSet<>();
 }

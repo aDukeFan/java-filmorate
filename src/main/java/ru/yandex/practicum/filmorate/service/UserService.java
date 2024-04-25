@@ -14,9 +14,9 @@ public interface UserService {
 
     List<User> findAll();
 
-    User addFriend(int userId, int friendId);
+    User addFollow(int userId, int friendId);
 
-    User removeFriend(int userId, int friendId);
+    User removeFollow(int userId, int friendId);
 
     List<User> getSameFriends(int userId, int friendId);
 
