@@ -14,5 +14,5 @@ public interface RatingService {
 
     List<Rating> getAll();
 
-    void remove(int Id);
+    void remove(int id);
 }
