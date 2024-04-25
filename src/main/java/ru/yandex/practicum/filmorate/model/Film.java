@@ -13,9 +13,6 @@ import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.*;
 
-/**
- * Film.
- */
 @Getter
 @Setter
 @ToString
@@ -32,6 +29,6 @@ public class Film {
     @Positive(message = "Duration must be positive.")
     private int duration;
     private Rating mpa;
-    private LinkedHashSet<Integer> likes = new LinkedHashSet<>();
-    private LinkedHashSet<Genre> genres = new LinkedHashSet<>();
+    private Set<Integer> likes = new LinkedHashSet<>();
+    private Set<Genre> genres = new LinkedHashSet<>();
 }

@@ -93,10 +93,9 @@ public class UserRepository {
         throwNotFoundExceptionForNonExistentUserId(userId);
         throwNotFoundExceptionForNonExistentUserId(friendId);
         List<User> sameFollowers = template.query(
-                "select * from users where id in " +
-                        "(select following_id from follows where followed_id = ?) " +
-                        "and id in " +
-                        "(select following_id from follows where followed_id = ?)",
+                "select * from users as u " +
+                        "join follows as f on f.following_id = u.id and f.followed_id = ? " +
+                        "join follows as friend_f on friend_f.following_id = u.id and friend_f.followed_id = ?",
                 userWithoutFollowersRowMapper(), userId, friendId);
         sameFollowers.forEach(this::setFollowersIdsFromDateBase);
         log.info("show same followers of user '{}' and user '{}'", userId, friendId);
@@ -106,8 +105,8 @@ public class UserRepository {
     public List<User> getFollowers(Integer userId) {
         throwNotFoundExceptionForNonExistentUserId(userId);
         List<User> followers = template.query(
-                "select * from users where id in " +
-                        "(select following_id from follows where followed_id = ?)",
+                "select * from users as u " +
+                        "join follows as f on f.following_id = u.id and f.followed_id = ?",
                 userWithoutFollowersRowMapper(), userId);
         followers.forEach(this::setFollowersIdsFromDateBase);
         log.info("show followers of user '{}'", userId);

@@ -26,5 +26,5 @@ public class User {
     private String login;
     @Past
     private LocalDate birthday;
-    private LinkedHashSet<Integer> friends = new LinkedHashSet<>();
+    private Set<Integer> friends = new LinkedHashSet<>();
 }

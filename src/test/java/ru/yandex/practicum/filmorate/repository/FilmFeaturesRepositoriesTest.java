@@ -13,16 +13,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @JdbcTest // указываем, о необходимости подготовить бины для работы с БД
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-class FilmFeaturesRepositoryTest {
+class FilmFeaturesRepositoriesTest {
 
     private final JdbcTemplate template;
 
     @Test
     void testGetGenreById() {
-        FilmFeaturesRepository repository = new FilmFeaturesRepository(template);
+        GenreRepository repository = new GenreRepository(template);
         Genre genre = new Genre().setId(7).setName("Экшн");
-        repository.createGenre(genre);
-        Genre savedGenre = repository.getGenreById(7);
+        repository.create(genre);
+        Genre savedGenre = repository.getById(7);
         assertThat(savedGenre)
                 .isNotNull()
                 .usingRecursiveComparison().isEqualTo(genre);
@@ -30,10 +30,10 @@ class FilmFeaturesRepositoryTest {
 
     @Test
     void getRatingById() {
-        FilmFeaturesRepository repository = new FilmFeaturesRepository(template);
+        RatingRepository repository = new RatingRepository(template);
         Rating rating = new Rating().setId(6).setName("XYZ");
-        repository.createRating(rating);
-        Rating savedRating = repository.getRatingById(6);
+        repository.create(rating);
+        Rating savedRating = repository.getById(6);
         assertThat(savedRating)
                 .isNotNull()
                 .usingRecursiveComparison().isEqualTo(rating);

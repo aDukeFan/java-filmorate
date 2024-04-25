@@ -12,17 +12,14 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Rating;
 
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 @Component
 @AllArgsConstructor
 @Slf4j
 public class FilmRepository {
 
-    JdbcTemplate template;
+    private JdbcTemplate template;
 
     public Film create(Film film) {
         template.update(
@@ -47,13 +44,13 @@ public class FilmRepository {
                     ratingId, film.getId());
             log.info("saved rating '{}' of the film to table 'films'", ratingName);
         }
-        LinkedHashSet<Genre> genres = film.getGenres();
+        Set<Genre> genres = film.getGenres();
         if (!genres.isEmpty()) {
-            genres.forEach(genre -> throwValidationExceptionForNonExistentId(genre.getId(), "genres"));
-            genres.forEach(genre -> genre.setName(template.queryForObject(
+            film.getGenres().forEach(genre -> throwValidationExceptionForNonExistentId(genre.getId(), "genres"));
+            film.getGenres().forEach(genre -> genre.setName(template.queryForObject(
                     "select name from genres where id = ?",
                     (rs, rowNum) -> rs.getString("name"), genre.getId())));
-            genres.forEach(genre -> template.update(
+            film.getGenres().forEach(genre -> template.update(
                     "insert into genres_films (genre_id, film_id) values (?, ?)",
                     genre.getId(), film.getId()));
             log.info("saved genres of the film to table 'genres_films'");
@@ -82,16 +79,16 @@ public class FilmRepository {
             film.getMpa().setName(ratingName);
             log.info("update film's mpa in table 'films'");
         }
-        LinkedHashSet<Genre> genres = film.getGenres();
+        Set<Genre> genres = film.getGenres();
         if (!genres.isEmpty()) {
-            genres.forEach(genre -> throwValidationExceptionForNonExistentId(genre.getId(), "genres"));
+            film.getGenres().forEach(genre -> throwValidationExceptionForNonExistentId(genre.getId(), "genres"));
             template.update(
                     "delete from genres_films where film_id = ?",
                     film.getId());
-            genres.forEach(genre -> template.update(
+            film.getGenres().forEach(genre -> template.update(
                     "insert into genres_films (genre_id, film_id) values (?, ?)",
                     genre.getId(), film.getId()));
-            genres.forEach(genre -> genre.setName(template.queryForObject(
+            film.getGenres().forEach(genre -> genre.setName(template.queryForObject(
                     "select name from genres where id = ?",
                     (rs, rowNum) -> rs.getString("name"), genre.getId())));
             log.info("update film's genres in table 'genres_films'");
@@ -125,7 +122,7 @@ public class FilmRepository {
                 "select genre_id as id from genres_films where film_id = ?",
                 (rs, rowNum) -> rs.getInt("id"), id);
         if (!genresIds.isEmpty()) {
-            List<Genre> genresList = new ArrayList<>();
+            List<Genre> genresList = new LinkedList<>();
             genresIds.forEach(genreId -> genresList.add(template.queryForObject(
                     "select * from genres where id = ?",
                     (rs, rowNum) -> new Genre()

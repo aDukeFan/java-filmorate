@@ -181,21 +181,18 @@ WHERE following_id = ?
 * ####  получить общий подписчиков без их подписчиков (они же друзья)
 ```sqlite-psql
 SELECT * 
-FROM users 
-WHERE id IN (SELECT following_id 
-             FROM follows 
-             WHERE followed_id = ?)
-  AND id IN (SELECT following_id 
-             FROM follows 
-             WHERE followed_id = ?)
+FROM users AS u
+JOIN follows AS f ON f.following_id = u.id 
+                 AND f.followed_id = ?
+JOIN follows AS friend_f ON friend_f.following_id = u.id 
+                        AND friend_f.followed_id = ?"
 ````
 * ####  получить всех подписчиков пользователя по id (без подписок подписчиков
 ```sqlite-psql
-SELECT * 
-FROM users 
-WHERE id IN (SELECT following_id
-             FROM follows
-             WHERE followed_id = ?)
+SELECT *  
+FROM users u 
+JOIN follows AS f ON f.following_id = u.id 
+                 AND f.followed_id = ?;
 ````
 * ####  получить id подписчиков пользователя
 ```sqlite-psql

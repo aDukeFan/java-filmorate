@@ -10,9 +10,7 @@ import ru.yandex.practicum.filmorate.model.Rating;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -59,11 +57,11 @@ class RepositoryTest {
         repository.addLike(2, 2);
         repository.addLike(2, 3);
         repository.addLike(3, 1);
-        LinkedHashSet<Integer> likesToAdd = new LinkedHashSet<>();
+        Set<Integer> likesToAdd = new LinkedHashSet<>();
         likesToAdd.add(1);
         likesToAdd.add(2);
         repository.removeLike(1, 3);
-        LinkedHashSet<Integer> savedLikes = repository.getById(1).getLikes();
+        Set<Integer> savedLikes = repository.getById(1).getLikes();
         assertThat(savedLikes)
                 .isNotNull()
                 .usingRecursiveComparison()
@@ -101,7 +99,7 @@ class RepositoryTest {
                 .usingRecursiveComparison()
                 .isEqualTo(user1toUpdate);
         userRepository.addFollow(1, 2);
-        LinkedHashSet<Integer> friendsIds = new LinkedHashSet<>();
+        Set<Integer> friendsIds = new LinkedHashSet<>();
         friendsIds.add(2);
         assertThat(userRepository.getById(1).getFriends())
                 .isNotNull()
