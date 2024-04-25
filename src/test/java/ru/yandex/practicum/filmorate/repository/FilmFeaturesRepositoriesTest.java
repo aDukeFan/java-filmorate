@@ -10,7 +10,6 @@ import ru.yandex.practicum.filmorate.model.Rating;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 @JdbcTest // указываем, о необходимости подготовить бины для работы с БД
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 class FilmFeaturesRepositoriesTest {

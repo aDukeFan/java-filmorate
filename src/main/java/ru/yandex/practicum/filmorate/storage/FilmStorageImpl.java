@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.storage;
 
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -15,6 +14,7 @@ import java.util.Map;
 @Component
 @Slf4j
 public class FilmStorageImpl implements FilmStorage {
+
     private final Map<Integer, Film> films = new HashMap<>();
     private int nextId = 1;
 

@@ -10,7 +10,10 @@ import ru.yandex.practicum.filmorate.model.Rating;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -75,7 +78,6 @@ class RepositoryTest {
                 .isNotNull()
                 .usingRecursiveComparison()
                 .isEqualTo(filmsWithLikes);
-
 
         User savedUser = userRepository.getById(1);
         User user1BeforeSaved = usersBeforeSaved.get(0);

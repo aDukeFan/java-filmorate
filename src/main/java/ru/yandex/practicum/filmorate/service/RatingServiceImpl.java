@@ -14,6 +14,7 @@ import java.util.List;
 public class RatingServiceImpl implements RatingService {
 
     private RatingRepository repository;
+
     @Override
     public Rating create(Rating rating) {
         return repository.create(rating);

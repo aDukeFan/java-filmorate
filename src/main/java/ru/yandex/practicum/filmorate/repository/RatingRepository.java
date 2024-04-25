@@ -51,8 +51,6 @@ public class RatingRepository {
 
     }
 
-
-
     private RowMapper<Rating> ratingRowMapper() {
         return (rs, rowNum) -> new Rating()
                 .setId(rs.getInt("id"))

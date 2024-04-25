@@ -14,6 +14,7 @@ import java.util.List;
 public class GenreServiceImpl implements GenreService {
 
     private GenreRepository repository;
+
     @Override
     public Genre create(Genre genre) {
         return repository.create(genre);
