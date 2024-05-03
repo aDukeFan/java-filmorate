@@ -223,4 +223,3 @@ SELECT *
 FROM ratings
 WHERE id = ?
 ````
-#### проверил: [студент](https://github.com/awdiru)
