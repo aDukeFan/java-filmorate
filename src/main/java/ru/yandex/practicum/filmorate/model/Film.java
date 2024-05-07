@@ -25,11 +25,12 @@ public class Film {
     private String name;
     @Size(max = 200, message = "Description is too long (max 200 chars).")
     private String description;
-    @ReleaseDate(message = "The date of release must be after 28 December 1985 and before now")
+    @ReleaseDate(message = "The date of release must be after 28 December 1985")
     private LocalDate releaseDate;
     @Positive(message = "Duration must be positive.")
     private int duration;
     private Rating mpa;
     private Set<Integer> likes = new LinkedHashSet<>();
     private Set<Genre> genres = new LinkedHashSet<>();
+    private Set<Director> directors = new LinkedHashSet<>();
 }

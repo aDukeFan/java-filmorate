@@ -8,6 +8,6 @@ public class ReleaseDateValidator implements ConstraintValidator<ReleaseDate, Lo
     @Override
     public boolean isValid(final LocalDate valueToValidate, final ConstraintValidatorContext context) {
         return valueToValidate.isAfter(LocalDate.of(1895, 12, 28))
-                && valueToValidate.isBefore(LocalDate.now());
+                && valueToValidate.isBefore(LocalDate.now().plusYears(5));
     }
 }

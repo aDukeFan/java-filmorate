@@ -52,4 +52,9 @@ public class FilmServiceImpl implements FilmService {
     public List<Film> getTopPopularFilms(int count) {
         return filmRepository.getTopPopularFilms(count);
     }
+
+    @Override
+    public List<Film> getFilmsByDirector(int id, String typeOfSort) {
+        return filmRepository.getFilmsByDirector(id, typeOfSort);
+    }
 }
