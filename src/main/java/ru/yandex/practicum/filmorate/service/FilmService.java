@@ -18,4 +18,6 @@ public interface FilmService {
     Film removeLike(int filmId, int userId);
 
     List<Film> getTopPopularFilms(int count);
+
+    void delFilmById(int filmId);
 }

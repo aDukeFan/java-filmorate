@@ -20,6 +20,9 @@ public class UserRepository {
     private JdbcTemplate template;
 
     public User create(User user) {
+        if (user.getName().isEmpty()) {
+            user.setName(user.getLogin());
+        }
         template.update(
                 "insert into users (name, login, email, birthday) values(?, ?, ?, ?)",
                 user.getName(),
@@ -135,4 +138,9 @@ public class UserRepository {
             throw new NotFoundException("No users with such ID: " + id);
         }
     }
+
+   public void delUserById(int userId) {
+       template.update("DELETE FROM users WHERE id=?", userId);
+       log.info("deleted user by id '{}'", userId);
+   }
 }

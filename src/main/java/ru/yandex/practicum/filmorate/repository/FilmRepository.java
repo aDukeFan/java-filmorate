@@ -208,4 +208,9 @@ public class FilmRepository {
             throw new ValidationException("No " + tableName + " with such ID: " + id);
         }
     }
+
+    public void delFilmById(int filmId) {
+        template.update("DELETE FROM public.films WHERE id=?", filmId);
+        log.info("deleted film by id '{}'", filmId);
+    }
 }

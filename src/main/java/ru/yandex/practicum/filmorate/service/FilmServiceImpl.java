@@ -52,4 +52,9 @@ public class FilmServiceImpl implements FilmService {
     public List<Film> getTopPopularFilms(int count) {
         return filmRepository.getTopPopularFilms(count);
     }
+
+    @Override
+    public void delFilmById(int filmId) {
+         filmRepository.delFilmById(filmId);
+    }
 }

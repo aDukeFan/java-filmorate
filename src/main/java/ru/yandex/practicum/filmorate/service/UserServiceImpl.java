@@ -53,4 +53,8 @@ public class UserServiceImpl implements UserService {
         return repository.getFollowers(userId);
     }
 
+    @Override
+    public void delUserById(int userId) {
+         repository.delUserById(userId);
+    }
 }
