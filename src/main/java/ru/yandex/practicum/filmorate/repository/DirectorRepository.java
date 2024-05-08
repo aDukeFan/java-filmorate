@@ -1,10 +1,9 @@
 package ru.yandex.practicum.filmorate.repository;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
@@ -13,11 +12,13 @@ import java.util.List;
 
 @Component
 @AllArgsConstructor
+@Slf4j
 public class DirectorRepository {
 
     private JdbcTemplate template;
 
     public Director create(Director director) {
+        log.info("Директор с именем: {} - получен на сохранение", director.getName());
         template.update("insert into directors (name) values(?)",
                 director.getName());
         Integer newId = 0;
@@ -25,6 +26,7 @@ public class DirectorRepository {
                 "select max(id) as max from directors",
                 (rs, rowNum) -> rs.getInt("max"));
         director.setId(newId);
+        log.info("Директор с именем: {} - получил id {} и сохранен", director.getName(), director.getId());
         return director;
     }
 
@@ -33,6 +35,7 @@ public class DirectorRepository {
         template.update(
                 "update directors set name = ? where id = ?",
                 director.getName(), director.getId());
+        log.info("Директор с id {} получил имя {}", director.getId(), director.getName());
         return director;
     }
 
@@ -51,7 +54,9 @@ public class DirectorRepository {
     public void removeById(Integer id) {
         throwNotFoundExceptionForNonExistentId(id);
         template.update("delete from directors_films where director_id = ?", id);
+        log.info("Директор с id {} исключен из фильмов", id);
         template.update("delete from directors where id = ?", id);
+        log.info("Директор с id {} удален", id);
     }
 
     private RowMapper<Director> directorRowMapper() {

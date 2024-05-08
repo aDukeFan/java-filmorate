@@ -17,14 +17,12 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public Film create(Film film) {
-        filmRepository.create(film);
-        return film;
+        return filmRepository.create(film);
     }
 
     @Override
     public Film update(Film film) {
-        filmRepository.update(film);
-        return film;
+        return filmRepository.update(film);
     }
 
     @Override

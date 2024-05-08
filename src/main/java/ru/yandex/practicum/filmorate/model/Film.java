@@ -11,6 +11,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -23,14 +24,16 @@ public class Film {
     @NotEmpty(message = "Name must be set")
     @NotNull(message = "Must have a name")
     private String name;
+    @ReleaseDate(message = "The date of release must be after 28 December 1895")
+    private LocalDate releaseDate;
     @Size(max = 200, message = "Description is too long (max 200 chars).")
     private String description;
-    @ReleaseDate(message = "The date of release must be after 28 December 1985")
-    private LocalDate releaseDate;
     @Positive(message = "Duration must be positive.")
     private int duration;
+    private int rate;
     private Rating mpa;
-    private Set<Integer> likes = new LinkedHashSet<>();
+    private Set<Director> directors = new HashSet<>();
     private Set<Genre> genres = new LinkedHashSet<>();
-    private Set<Director> directors = new LinkedHashSet<>();
+    private Set<Integer> likes = new LinkedHashSet<>();
+
 }

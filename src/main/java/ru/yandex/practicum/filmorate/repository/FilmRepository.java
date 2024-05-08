@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.repository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.RepeatException;
@@ -13,8 +12,6 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Rating;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,6 +24,7 @@ public class FilmRepository {
     private JdbcTemplate template;
 
     public Film create(Film film) {
+        log.info("На сохранение поступил фильм: id {}, name {}, release {}", film.getId(), film.getName(), film.getReleaseDate());
         template.update(
                 "insert into films (name, description, release, duration) values(?, ?, ?, ?)",
                 film.getName(),
@@ -65,14 +63,14 @@ public class FilmRepository {
         Set<Director> directors = film.getDirectors();
         if (!directors.isEmpty()) {
             directors.forEach(director -> isDirectorInDirectorsTable(director.getId()));
-//            directors.forEach(director -> director.setName(template.queryForObject(
-//                    "select name from directors where id = ?",
-//                    (rs, rowNum) -> rs.getString("name"), director.getId())));
-
             directors.forEach(director -> template.update(
                     "insert into directors_films (director_id, film_id) values (?, ?)",
                     director.getId(), film.getId()));
+            directors.forEach(director -> director.setName(template.queryForObject(
+                    "select name from directors where id = ?",
+                    (rs, rowNum) -> rs.getString("name"), director.getId())));
         }
+        log.info("Фильм с получил: id {} (name {}, release {})", film.getId(), film.getName(), film.getReleaseDate());
         return film;
     }
 
@@ -98,24 +96,27 @@ public class FilmRepository {
             log.info("update film's mpa in table 'films'");
         }
         Set<Genre> genres = film.getGenres();
+        Set<Director> directors = film.getDirectors();
+
+        template.update("delete from genres_films where film_id = ?", film.getId());
         if (!genres.isEmpty()) {
-            film.getGenres().forEach(genre -> throwValidationExceptionForNonExistentId(genre.getId(), "genres"));
-            film.getGenres().forEach(genre -> template.update(
+            genres.forEach(genre -> throwValidationExceptionForNonExistentId(genre.getId(), "genres"));
+            genres.forEach(genre -> template.update(
                     "insert into genres_films (genre_id, film_id) values (?, ?)",
                     genre.getId(), film.getId()));
-            film.getGenres().forEach(genre -> genre.setName(template.queryForObject(
+            genres.forEach(genre -> genre.setName(template.queryForObject(
                     "select name from genres where id = ?",
                     (rs, rowNum) -> rs.getString("name"), genre.getId())));
             log.info("update film's genres in table 'genres_films'");
         }
 
-        Set<Director> directors = film.getDirectors();
+        template.update("delete from directors_films where film_id = ?", film.getId());
         if (!directors.isEmpty()) {
-            film.getDirectors().forEach(director -> isDirectorInDirectorsTable(director.getId()));
-            film.getDirectors().forEach(director -> template.update(
+            directors.forEach(director -> isDirectorInDirectorsTable(director.getId()));
+            directors.forEach(director -> template.update(
                     "insert into directors_films (director_id, film_id) values (?, ?)",
                     director.getId(), film.getId()));
-            film.getDirectors().forEach(director -> director.setName(template.queryForObject(
+            directors.forEach(director -> director.setName(template.queryForObject(
                     "select name from directors where id = ?",
                     (rs, rowNum) -> rs.getString("name"), director.getId())));
             log.info("update film's directors in table 'directors_films'");
@@ -168,9 +169,9 @@ public class FilmRepository {
                         .setName(rs.getString("name")), filmId);
         film.getDirectors().addAll(filmDirectors);
 
-        List < Integer > likesList = template.query(
-                        "select user_id as id from likes where film_id = ?",
-                        (rs, rowNum) -> rs.getInt("id"), filmId);
+        List<Integer> likesList = template.query(
+                "select user_id as id from likes where film_id = ?",
+                (rs, rowNum) -> rs.getInt("id"), filmId);
         if (!likesList.isEmpty()) {
             film.getLikes().addAll(likesList);
         }
@@ -231,9 +232,8 @@ public class FilmRepository {
         } else if (sortBy.equals("likes")) {
             return directorFilms.stream().sorted(Comparator.comparingInt(o -> o.getLikes().size())).collect(Collectors.toList());
         } else {
-            return new ArrayList<>();
+            return directorFilms;
         }
-
     }
 
     //select * from films f
@@ -274,14 +274,6 @@ public class FilmRepository {
         if (Boolean.FALSE.equals(template.queryForObject(select,
                 (rs, rowNum) -> rs.getBoolean("match"), id))) {
             throw new ValidationException("No " + tableName + " with such ID: " + id);
-        }
-    }
-
-    private void isDirectorInDirectorsFilmsTable(int id) {
-        String select = "select exists (select film_id from directors_films where director_id = ?) as match";
-        if (Boolean.FALSE.equals(template.queryForObject(select,
-                (rs, rowNum) -> rs.getBoolean("match"), id))) {
-            throw new NotFoundException("No films by director with such ID: " + id);
         }
     }
 

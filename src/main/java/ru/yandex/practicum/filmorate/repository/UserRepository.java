@@ -20,6 +20,9 @@ public class UserRepository {
     private JdbcTemplate template;
 
     public User create(User user) {
+        if (user.getName().isEmpty()) {
+            user.setName(user.getLogin());
+        }
         template.update(
                 "insert into users (name, login, email, birthday) values(?, ?, ?, ?)",
                 user.getName(),
