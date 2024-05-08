@@ -17,14 +17,12 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public Film create(Film film) {
-        filmRepository.create(film);
-        return film;
+        return filmRepository.create(film);
     }
 
     @Override
     public Film update(Film film) {
-        filmRepository.update(film);
-        return film;
+        return filmRepository.update(film);
     }
 
     @Override
@@ -51,6 +49,11 @@ public class FilmServiceImpl implements FilmService {
     @Override
     public List<Film> getTopPopularFilms(int count) {
         return filmRepository.getTopPopularFilms(count);
+    }
+
+    @Override
+    public List<Film> getFilmsByDirector(int id, String typeOfSort) {
+        return filmRepository.getFilmsByDirector(id, typeOfSort);
     }
 
     @Override
