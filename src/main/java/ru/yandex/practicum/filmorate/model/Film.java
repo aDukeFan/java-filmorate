@@ -36,4 +36,62 @@ public class Film {
     private Set<Genre> genres = new LinkedHashSet<>();
     private Set<Integer> likes = new LinkedHashSet<>();
 
+
+    public static Film.Builder builder() {
+        return new Film().new Builder();
+    }
+
+    public class Builder {
+        private Builder() {
+        }
+
+        public Film.Builder id(Integer id) {
+            Film.this.id = id;
+            return this;
+        }
+
+        public Film.Builder description(String description) {
+            Film.this.description = description;
+            return this;
+        }
+
+        public Film.Builder releaseDate(LocalDate releaseDate) {
+            Film.this.releaseDate = releaseDate;
+            return this;
+        }
+
+        public Film.Builder name(String name) {
+            Film.this.name = name;
+            return this;
+        }
+
+        public Film.Builder duration(Integer duration) {
+            Film.this.duration = duration;
+            return this;
+        }
+
+        public Film.Builder directors(Set<Director> directors) {
+            Film.this.directors = directors;
+            return this;
+        }
+
+        public Film.Builder likes(Set<Integer> likes) {
+            Film.this.likes = likes;
+            return this;
+        }
+
+        public Film.Builder genres(Set<Genre> genres) {
+            Film.this.genres = genres;
+            return this;
+        }
+
+        public Builder mpa(Rating mpa) {
+            Film.this.mpa = mpa;
+            return this;
+        }
+
+        public Film build() {
+            return Film.this;
+        }
+    }
 }

@@ -25,4 +25,27 @@ public class Genre {
     public int hashCode() {
         return Objects.hashCode(id);
     }
+
+    public static Genre.Builder builder() {
+        return new Genre().new Builder();
+    }
+
+    public class Builder {
+        private Builder() {
+        }
+
+        public Genre.Builder id(int id) {
+            Genre.this.id = id;
+            return this;
+        }
+
+        public Genre.Builder name(String name) {
+            Genre.this.name = name;
+            return this;
+        }
+
+        public Genre build() {
+            return Genre.this;
+        }
+    }
 }
