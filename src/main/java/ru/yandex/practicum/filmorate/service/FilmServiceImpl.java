@@ -55,4 +55,9 @@ public class FilmServiceImpl implements FilmService {
     public List<Film> getFilmsByDirector(int id, String typeOfSort) {
         return filmRepository.getFilmsByDirector(id, typeOfSort);
     }
+
+    @Override
+    public List<Film> getFilmsByDirectorOrTitle(String query, String param) {
+        return filmRepository.getFilmsByDirectorOrTitle(query, param);
+    }
 }

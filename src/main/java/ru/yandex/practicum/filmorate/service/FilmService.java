@@ -20,4 +20,6 @@ public interface FilmService {
     List<Film> getTopPopularFilms(int count);
 
     List<Film> getFilmsByDirector(int id, String typeOfSort);
+
+    List<Film> getFilmsByDirectorOrTitle(String query, String param);
 }
