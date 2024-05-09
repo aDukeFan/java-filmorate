@@ -12,9 +12,9 @@ login varchar(255) not null,
 birthday date
 );
 
-create table if not exists follows (
-following_id integer not null references users(id),
-followed_id integer not null references users(id)
+CREATE TABLE if not exists follows (
+    following_id integer not null references users(id) on delete cascade,
+    followed_id integer not null references users(id) on delete cascade
 );
 
 create table if not exists ratings (
@@ -36,14 +36,14 @@ duration integer not null,
 rating_id integer, foreign key (rating_id) references ratings(id)
 );
 
-create table if not exists likes (
-film_id integer not null references films(id),
-user_id integer not null references users(id)
+CREATE TABLE if not exists likes (
+  film_id integer not null references films(id) on delete cascade,
+  user_id integer not null references users(id) on delete cascade
 );
 
-create table if not exists genres_films (
-genre_id integer not null references genres(id),
-film_id integer not null references films(id)
+CREATE TABLE if not exists genres_films (
+    genre_id integer not null references genres(id) on delete cascade,
+    film_id integer not null references films(id) on delete cascade
 );
 
 create table if not exists directors (
@@ -52,6 +52,6 @@ name varchar(200) not null
 );
 
 create table if not exists directors_films (
-director_id integer not null references directors(id),
-film_id integer not null references films(id)
+director_id integer not null references directors(id) on delete cascade,
+film_id integer not null references films(id) on delete cascade
 );

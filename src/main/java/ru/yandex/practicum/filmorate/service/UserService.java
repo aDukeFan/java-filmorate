@@ -21,4 +21,6 @@ public interface UserService {
     List<User> getSameFriends(int userId, int friendId);
 
     List<User> getFriends(int userId);
+
+    void delUserById(int userId);
 }

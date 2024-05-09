@@ -60,4 +60,9 @@ public class FilmServiceImpl implements FilmService {
     public List<Film> getFilmsByDirectorOrTitle(String query, String param) {
         return filmRepository.getFilmsByDirectorOrTitle(query, param);
     }
+
+    @Override
+    public void delFilmById(int filmId) {
+         filmRepository.delFilmById(filmId);
+    }
 }

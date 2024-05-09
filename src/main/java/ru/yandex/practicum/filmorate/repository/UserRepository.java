@@ -138,4 +138,9 @@ public class UserRepository {
             throw new NotFoundException("No users with such ID: " + id);
         }
     }
+
+   public void delUserById(int userId) {
+       template.update("DELETE FROM users WHERE id=?", userId);
+       log.info("deleted user by id '{}'", userId);
+   }
 }

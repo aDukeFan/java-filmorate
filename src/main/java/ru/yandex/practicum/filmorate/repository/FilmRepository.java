@@ -311,4 +311,9 @@ public class FilmRepository {
         }
     }
 
+
+    public void delFilmById(int filmId) {
+        template.update("DELETE FROM public.films WHERE id=?", filmId);
+        log.info("deleted film by id '{}'", filmId);
+    }
 }
