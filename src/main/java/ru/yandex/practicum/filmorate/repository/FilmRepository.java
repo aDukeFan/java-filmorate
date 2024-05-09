@@ -211,13 +211,10 @@ public class FilmRepository {
     }
 
     public List<Film> getTopPopularFilms(int count) {
-        List<Integer> topIds = template.query(
-                "select film_id as id from likes group by film_id order by count(user_id) desc limit(?)",
-                (rs, rowNum) -> rs.getInt("id"), count);
-        List<Film> topFilms = new ArrayList<>();
-        topIds.forEach(id -> topFilms.add(getById(id)));
-        log.info("show top {} films", count);
-        return topFilms;
+        return findAll().stream()
+                .sorted((o1, o2) -> o2.getLikes().size() - o1.getLikes().size())
+                .limit(count)
+                .collect(Collectors.toList());
     }
 
     public List<Film> getFilmsByDirector(int id, String sortBy) {
@@ -228,26 +225,55 @@ public class FilmRepository {
         List<Film> directorFilms = new ArrayList<>();
         directorFilmIds.forEach(filmId -> directorFilms.add(getById(filmId)));
         if (sortBy.equals("year")) {
-            return directorFilms.stream().sorted(Comparator.comparing(Film::getReleaseDate)).collect(Collectors.toList());
+            return directorFilms.stream()
+                    .sorted(Comparator.comparing(Film::getReleaseDate))
+                    .collect(Collectors.toList());
         } else if (sortBy.equals("likes")) {
-            return directorFilms.stream().sorted(Comparator.comparingInt(o -> o.getLikes().size())).collect(Collectors.toList());
+            return directorFilms.stream()
+                    .sorted(Comparator.comparingInt(o -> o.getLikes().size()))
+                    .collect(Collectors.toList());
         } else {
             return directorFilms;
         }
     }
 
-    //select * from films f
-    //join directors_films df on df.film_id = f.id and df.director_id = 1
-    //order by f.release asc;
-    //Описание задачи
-    //В информацию о фильмах должно быть добавлено имя режиссёра. После этого должна появиться следующая функциональность.
-    //
-    //Вывод всех фильмов режиссёра, отсортированных по количеству лайков.
-    //Вывод всех фильмов режиссёра, отсортированных по годам.
-    //API
-    //GET /films/director/{directorId}?sortBy=[year,likes]
-    //
-    //Возвращает список фильмов режиссера отсортированных по количеству лайков или году выпуска.
+    public List<Film> getFilmsByDirectorOrTitle(String query, String param) {
+        switch (param) {
+            case "title":
+                return searchFilmByTitle(query);
+            case "director": {
+                return searchFilmByDirector(query);
+            }
+            case "title,director": {
+                List<Film> result = new ArrayList<>();
+                result.addAll(searchFilmByDirector(query));
+                result.addAll(searchFilmByTitle(query));
+                return result;
+            }
+            default:
+                return new ArrayList<>();
+        }
+    }
+
+    private List<Film> searchFilmByTitle(String query) {
+        return findAll().stream()
+                .filter(film -> film.getName().toLowerCase().contains(query.toLowerCase()))
+                .collect(Collectors.toList());
+    }
+
+    private List<Film> searchFilmByDirector(String query) {
+        List<Film> filmsWithDirectors = findAll().stream()
+                .filter(film -> !film.getDirectors().isEmpty()).collect(Collectors.toList());
+        Set<Film> setOfFilms = new LinkedHashSet<>();
+        for (Film film : filmsWithDirectors) {
+            for (Director director : film.getDirectors()) {
+                if (director.getName().toLowerCase().contains(query.toLowerCase())) {
+                    setOfFilms.add(film);
+                }
+            }
+        }
+        return new ArrayList<>(setOfFilms);
+    }
 
     private boolean isFilmLikedByUser(int filmId, int userId) {
         return Boolean.TRUE.equals(template.queryForObject(
