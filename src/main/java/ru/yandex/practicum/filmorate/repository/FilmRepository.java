@@ -211,13 +211,10 @@ public class FilmRepository {
     }
 
     public List<Film> getTopPopularFilms(int count) {
-        List<Integer> topIds = template.query(
-                "select film_id as id from likes group by film_id order by count(user_id) desc limit(?)",
-                (rs, rowNum) -> rs.getInt("id"), count);
-        List<Film> topFilms = new ArrayList<>();
-        topIds.forEach(id -> topFilms.add(getById(id)));
-        log.info("show top {} films", count);
-        return topFilms;
+        return findAll().stream()
+                .sorted((o1, o2) -> o2.getLikes().size() - o1.getLikes().size())
+                .limit(count)
+                .collect(Collectors.toList());
     }
 
     public List<Film> getFilmsByDirector(int id, String sortBy) {
@@ -235,19 +232,6 @@ public class FilmRepository {
             return directorFilms;
         }
     }
-
-    //select * from films f
-    //join directors_films df on df.film_id = f.id and df.director_id = 1
-    //order by f.release asc;
-    //Описание задачи
-    //В информацию о фильмах должно быть добавлено имя режиссёра. После этого должна появиться следующая функциональность.
-    //
-    //Вывод всех фильмов режиссёра, отсортированных по количеству лайков.
-    //Вывод всех фильмов режиссёра, отсортированных по годам.
-    //API
-    //GET /films/director/{directorId}?sortBy=[year,likes]
-    //
-    //Возвращает список фильмов режиссера отсортированных по количеству лайков или году выпуска.
 
     private boolean isFilmLikedByUser(int filmId, int userId) {
         return Boolean.TRUE.equals(template.queryForObject(
