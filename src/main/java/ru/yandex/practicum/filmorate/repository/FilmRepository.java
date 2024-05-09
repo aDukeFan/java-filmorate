@@ -274,6 +274,7 @@ public class FilmRepository {
         }
         return new ArrayList<>(setOfFilms);
     }
+
     private boolean isFilmLikedByUser(int filmId, int userId) {
         return Boolean.TRUE.equals(template.queryForObject(
                 "select exists (select * from likes where film_id = ? and user_id = ?) as match",
