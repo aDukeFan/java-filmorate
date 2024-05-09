@@ -52,13 +52,18 @@ public class FilmController {
         return filmService.getTopPopularFilms(count);
     }
 
-    @DeleteMapping("/{filmId}")
-    public void delFilmById(@PathVariable Integer filmId) {
-         filmService.delFilmById(filmId);
-    }
-
     @GetMapping("/director/{directorId}")
     public List<Film> findDirectorsFilms(@PathVariable Integer directorId, @RequestParam String sortBy) {
         return filmService.getFilmsByDirector(directorId, sortBy);
+    }
+
+    @GetMapping("/search")
+    public List<Film> searchByString(@RequestParam String query, @RequestParam String by) {
+        return filmService.getFilmsByDirectorOrTitle(query, by);
+    }
+
+    @DeleteMapping("/{filmId}")
+    public void delFilmById(@PathVariable Integer filmId) {
+         filmService.delFilmById(filmId);
     }
 }

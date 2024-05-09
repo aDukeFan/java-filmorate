@@ -225,12 +225,54 @@ public class FilmRepository {
         List<Film> directorFilms = new ArrayList<>();
         directorFilmIds.forEach(filmId -> directorFilms.add(getById(filmId)));
         if (sortBy.equals("year")) {
-            return directorFilms.stream().sorted(Comparator.comparing(Film::getReleaseDate)).collect(Collectors.toList());
+            return directorFilms.stream()
+                    .sorted(Comparator.comparing(Film::getReleaseDate))
+                    .collect(Collectors.toList());
         } else if (sortBy.equals("likes")) {
-            return directorFilms.stream().sorted(Comparator.comparingInt(o -> o.getLikes().size())).collect(Collectors.toList());
+            return directorFilms.stream()
+                    .sorted(Comparator.comparingInt(o -> o.getLikes().size()))
+                    .collect(Collectors.toList());
         } else {
             return directorFilms;
         }
+    }
+
+    public List<Film> getFilmsByDirectorOrTitle(String query, String param) {
+        switch (param) {
+            case "title":
+                return searchFilmByTitle(query);
+            case "director": {
+                return searchFilmByDirector(query);
+            }
+            case "title,director": {
+                List<Film> result = new ArrayList<>();
+                result.addAll(searchFilmByDirector(query));
+                result.addAll(searchFilmByTitle(query));
+                return result;
+            }
+            default:
+                return new ArrayList<>();
+        }
+    }
+
+    private List<Film> searchFilmByTitle(String query) {
+        return findAll().stream()
+                .filter(film -> film.getName().toLowerCase().contains(query.toLowerCase()))
+                .collect(Collectors.toList());
+    }
+
+    private List<Film> searchFilmByDirector(String query) {
+        List<Film> filmsWithDirectors = findAll().stream()
+                .filter(film -> !film.getDirectors().isEmpty()).collect(Collectors.toList());
+        Set<Film> setOfFilms = new LinkedHashSet<>();
+        for (Film film : filmsWithDirectors) {
+            for (Director director : film.getDirectors()) {
+                if (director.getName().toLowerCase().contains(query.toLowerCase())) {
+                    setOfFilms.add(film);
+                }
+            }
+        }
+        return new ArrayList<>(setOfFilms);
     }
 
     private boolean isFilmLikedByUser(int filmId, int userId) {
@@ -261,11 +303,6 @@ public class FilmRepository {
         }
     }
 
-    public void delFilmById(int filmId) {
-        template.update("DELETE FROM public.films WHERE id=?", filmId);
-        log.info("deleted film by id '{}'", filmId);
-    }
-
     private void isDirectorInDirectorsTable(int id) {
         String select = "select exists (select id from directors where id = ?) as match";
         if (Boolean.FALSE.equals(template.queryForObject(select,
@@ -274,4 +311,9 @@ public class FilmRepository {
         }
     }
 
+
+    public void delFilmById(int filmId) {
+        template.update("DELETE FROM public.films WHERE id=?", filmId);
+        log.info("deleted film by id '{}'", filmId);
+    }
 }
