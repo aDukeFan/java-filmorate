@@ -53,7 +53,7 @@ useful int default 0
 );
 
 create table if not exists reviews_likes (
-review_id integer not null references reviews(id),
-user_id integer not null references users(id),
+review_id integer not null,
+user_id integer not null,
 review_like integer
 );
