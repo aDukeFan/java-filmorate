@@ -26,4 +26,27 @@ public class Rating {
     public int hashCode() {
         return Objects.hash(id, name);
     }
+
+    public static Rating.Builder builder() {
+        return new Rating().new Builder();
+    }
+
+    public class Builder {
+        private Builder() {
+        }
+
+        public Rating.Builder id(Integer id) {
+            Rating.this.id = id;
+            return this;
+        }
+
+        public Rating.Builder name(String name) {
+            Rating.this.name = name;
+            return this;
+        }
+
+        public Rating build() {
+            return Rating.this;
+        }
+    }
 }
