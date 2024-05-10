@@ -275,6 +275,21 @@ public class FilmRepository {
         return new ArrayList<>(setOfFilms);
     }
 
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        String sql = "SELECT film_id " +
+                "FROM likes " +
+                "WHERE user_id IN (?, ?) " +
+                "GROUP BY film_id " +
+                "HAVING COUNT(DISTINCT user_id) = 2 " +
+                "ORDER BY COUNT(*) DESC";
+
+        List<Integer> filmIds = template.query(sql, (rs, rowNum) -> rs.getInt("film_id"), userId, friendId);
+
+        return filmIds.stream()
+                .map(this::getById)
+                .collect(Collectors.toList());
+    }
+
     private boolean isFilmLikedByUser(int filmId, int userId) {
         return Boolean.TRUE.equals(template.queryForObject(
                 "select exists (select * from likes where film_id = ? and user_id = ?) as match",
