@@ -1,6 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.repository.ReviewRepository;
@@ -8,14 +8,10 @@ import ru.yandex.practicum.filmorate.repository.ReviewRepository;
 import java.util.List;
 
 @Service
+@AllArgsConstructor
 public class ReviewServiceImpl implements ReviewService{
 
-    private final ReviewRepository repository;
-
-    @Autowired
-    public ReviewServiceImpl(ReviewRepository repository) {
-        this.repository = repository;
-    }
+    private ReviewRepository repository;
 
     @Override
     public Review create(Review review) {
@@ -59,11 +55,11 @@ public class ReviewServiceImpl implements ReviewService{
 
     @Override
     public void addDisLikeReview(Integer id, Integer userId) {
-        repository.addDisLikeReview(id, userId);
+        repository.addDisLikeToReview(id, userId);
     }
 
     @Override
     public void deleteDisLikeReview(Integer id, Integer userId) {
-        repository.deleteDisLikeReview(id, userId);
+        repository.deleteDisLikeFromReview(id, userId);
     }
 }

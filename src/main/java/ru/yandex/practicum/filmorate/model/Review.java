@@ -15,14 +15,12 @@ import javax.validation.constraints.Positive;
 @Builder
 @Slf4j
 public class Review {
-    Integer reviewId;
-    String content;
+    private Integer reviewId;
+    private String content;
     @NotNull(message = "isPositive shouldn't be null")
-    Boolean isPositive;
-    @Positive(message = "userId must be positive")
-    Integer userId;
-    @Positive(message = "filmId must be positive")
-    Integer filmId;
-    Integer useful;
+    private Boolean isPositive;
+    private Integer userId;
+    private Integer filmId;
+    private int useful = 0;
 
 }
