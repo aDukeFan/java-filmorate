@@ -37,9 +37,9 @@ public class ReviewRepository {
     }
 
     public Review update(Review review) {
-        String sql = "update reviews set content = ?, is_positive = ?, user_id = ?, film_id = ? where id = ?";
+        String sql = "update reviews set content = ?, is_positive = ?, user_id = ?, film_id = ?, useful = ? where id = ?";
         template.update(sql, review.getContent(), review.getIsPositive(), review.getUserId(), review.getFilmId(),
-                review.getReviewId());
+                review.getUseful(), review.getReviewId());
         log.info("Обновлен отзыв с id {}", review.getReviewId());
         return review;
     }
@@ -142,14 +142,15 @@ public class ReviewRepository {
     }
 
     public void addLikeReview(Integer id, Integer userId) {
-        String sql = "insert into reviews_likes(review_id, user_id, review_like) values (?, ?, ?)";
-        template.update(sql, id, userId, 1);
+        String sql = "insert into reviews_rates(review_id, user_id, useful) values (?, ?, ?)";
+        template.update(sql, id, userId, 1); // referential integrity(?)
         Review review = this.getReviewById(id);
+        review.setUseful(this.getReviewRate(review.getReviewId()));
         this.update(review);
     }
 
     public void deleteLikeReview(Integer id, Integer userId) {
-        String sql = "delete from reviews_likes where review_id = ? and user_id = ? and review_like = 1";
+        String sql = "delete from reviews_rates where review_id = ? and user_id = ? and useful = 1";
         template.update(sql, id, userId);
         Review review = this.getReviewById(id);
         this.update(review);
@@ -157,14 +158,14 @@ public class ReviewRepository {
 
 
     public void addDisLikeToReview(Integer id, Integer userId) {
-        String sql = "insert into reviews_likes(review_id, user_id, review_like) values (?, ?, ?)";
+        String sql = "insert into reviews_rates(review_id, user_id, useful) values (?, ?, ?)";
         template.update(sql, id, userId, -1);
         Review review = this.getReviewById(id);
         this.update(review);
     }
 
     public void deleteDisLikeFromReview(Integer id, Integer userId) {
-        String sql = "delete from reviews_likes where review_id = ? and user_id = ? and review_like = -1";
+        String sql = "delete from reviews_rates where review_id = ? and user_id = ? and useful = -1";
         template.update(sql, id, userId);
         Review review = this.getReviewById(id);
         this.update(review);
@@ -172,9 +173,14 @@ public class ReviewRepository {
 
     private int getReviewRate(int reviewId) {
         Integer count = 0;
-        count += template.queryForObject(
-                "select sum(useful) as result from reviews_rates where review_id = ?",
-                Integer.class, reviewId);
+        String sql = "select sum(useful) as result from reviews_rates where review_id = ?";
+        SqlRowSet sqlRowSet = template.queryForRowSet(sql, reviewId);
+        while (sqlRowSet.next()) {
+            count = sqlRowSet.getInt("result");
+        }
+    //    count += template.queryForObject(
+      //          "select sum(useful) as result from reviews_rates where review_id = ?",
+     //           Integer.class, reviewId);
         return count;
     }
 
