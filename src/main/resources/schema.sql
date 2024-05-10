@@ -63,7 +63,7 @@ user_id integer not null references users(id) on delete cascade,
 film_id integer not null references films(id) on delete cascade
 );
 
-create table if not exists reviews_rate (
+create table if not exists reviews_rates (
 review_id integer not null references reviews(id) on delete cascade,
 user_id integer not null references users(id) on delete cascade,
 useful integer

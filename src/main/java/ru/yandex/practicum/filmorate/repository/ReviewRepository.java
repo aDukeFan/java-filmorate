@@ -173,7 +173,7 @@ public class ReviewRepository {
     private int getReviewRate(int reviewId) {
         Integer count = 0;
         count += template.queryForObject(
-                "select sum(useful) as result from reviews_rate where review_id = ?",
+                "select sum(useful) as result from reviews_rates where review_id = ?",
                 Integer.class, reviewId);
         return count;
     }
