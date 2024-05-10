@@ -73,7 +73,7 @@ class RepositoryTest {
         filmsWithLikes.add(repository.getById(2));
         filmsWithLikes.add(repository.getById(1));
         filmsWithLikes.add(repository.getById(3));
-        List<Film> savedFilmsWithLikes = repository.getTopPopularFilms(3);
+        List<Film> savedFilmsWithLikes = repository.getTopPopularFilms(3, 0, 0);
         assertThat(savedFilmsWithLikes)
                 .isNotNull()
                 .usingRecursiveComparison()

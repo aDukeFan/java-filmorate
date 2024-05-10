@@ -51,10 +51,7 @@ public class FilmController {
     public List<Film> findTopPopularFilms(@RequestParam(required = false, defaultValue = "10") int count,
                                           @RequestParam(required = false, defaultValue = "0") int genreId,
                                           @RequestParam(required = false, defaultValue = "0") int year) {
-        if (genreId != 0 || year != 0) {
-            return filmService.getMostPopularFilmsByYearAndGenre(count, genreId, year);
-        }
-        return filmService.getTopPopularFilms(count);
+        return filmService.getTopPopularFilms(count, genreId, year);
     }
 
     @GetMapping("/director/{directorId}")

@@ -210,30 +210,32 @@ public class FilmRepository {
         return getById(filmId);
     }
 
-    public List<Film> getTopPopularFilms(int count) {
-        return findAll().stream()
+    public List<Film> getTopPopularFilms(int count, int genreId, int year) {
+        List<Film> top = findAll().stream()
                 .sorted((o1, o2) -> o2.getLikes().size() - o1.getLikes().size())
                 .limit(count)
                 .collect(Collectors.toList());
-    }
 
-    public List<Film> getMostPopularFilmsByYearAndGenre(int count, int genreId, int year) {
-        return getTopPopularFilms(count).stream()
-                .filter(film -> {
-                    if (genreId != 0) {
-                        return film.getGenres().stream().anyMatch(genre -> genre.getId() == genreId);
-                    } else {
-                        return true;
-                    }
-                })
-                .filter(film -> {
-                    if (year != 0) {
-                        return film.getReleaseDate().getYear() == year;
-                    } else {
-                        return true;
-                    }
-                })
-                .collect(Collectors.toList());
+        if (genreId != 0 || year != 0) {
+            return top.stream()
+                    .filter(film -> {
+                        if (genreId != 0) {
+                            return film.getGenres().stream().anyMatch(genre -> genre.getId() == genreId);
+                        } else {
+                            return true;
+                        }
+                    })
+                    .filter(film -> {
+                        if (year != 0) {
+                            return film.getReleaseDate().getYear() == year;
+                        } else {
+                            return true;
+                        }
+                    })
+                    .collect(Collectors.toList());
+        }
+
+        return top;
     }
 
     public List<Film> getFilmsByDirector(int id, String sortBy) {

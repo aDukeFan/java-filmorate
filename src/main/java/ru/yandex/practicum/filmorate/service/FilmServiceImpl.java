@@ -47,8 +47,8 @@ public class FilmServiceImpl implements FilmService {
     }
 
     @Override
-    public List<Film> getTopPopularFilms(int count) {
-        return filmRepository.getTopPopularFilms(count);
+    public List<Film> getTopPopularFilms(int count, int genreId, int year) {
+        return filmRepository.getTopPopularFilms(count, genreId, year);
     }
 
     @Override
@@ -69,10 +69,5 @@ public class FilmServiceImpl implements FilmService {
     @Override
     public List<Film> getCommonFilms(int userId, int friendId) {
         return filmRepository.getCommonFilms(userId, friendId);
-    }
-
-    @Override
-    public List<Film> getMostPopularFilmsByYearAndGenre(int count, int genreId, int year) {
-        return filmRepository.getMostPopularFilmsByYearAndGenre(count, genreId, year);
     }
 }
