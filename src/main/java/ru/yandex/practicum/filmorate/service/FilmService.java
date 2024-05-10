@@ -26,4 +26,6 @@ public interface FilmService {
     void delFilmById(int filmId);
 
     List<Film> getCommonFilms(int userId, int friendId);
+
+    List<Film> getMostPopularFilmsByYearAndGenre(int count, int genreId, int year);
 }

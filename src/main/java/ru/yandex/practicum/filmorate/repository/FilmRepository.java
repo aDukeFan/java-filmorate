@@ -217,6 +217,25 @@ public class FilmRepository {
                 .collect(Collectors.toList());
     }
 
+    public List<Film> getMostPopularFilmsByYearAndGenre(int count, int genreId, int year) {
+        return getTopPopularFilms(count).stream()
+                .filter(film -> {
+                    if (genreId != 0) {
+                        return film.getGenres().stream().anyMatch(genre -> genre.getId() == genreId);
+                    } else {
+                        return true;
+                    }
+                })
+                .filter(film -> {
+                    if (year != 0) {
+                        return film.getReleaseDate().getYear() == year;
+                    } else {
+                        return true;
+                    }
+                })
+                .collect(Collectors.toList());
+    }
+
     public List<Film> getFilmsByDirector(int id, String sortBy) {
         isDirectorInDirectorsTable(id);
         List<Integer> directorFilmIds = template.query(
