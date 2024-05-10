@@ -28,7 +28,6 @@ public class UserRowMapper {
         return friends;
     }
 
-
     public RowMapper<User> userRowMapper() {
         return ((rs, rowNum) ->
                 User.builder()
@@ -38,7 +37,6 @@ public class UserRowMapper {
                         .login(rs.getString("login"))
                         .birthday(rs.getDate("birthday").toLocalDate())
                         .friends(setFriendsListFromDb(rs.getInt("id")))
-                        .build()
-        );
+                        .build());
     }
 }
