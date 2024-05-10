@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -58,8 +59,8 @@ public class ReviewRepository {
             review.setUserId(sqlRowSet.getInt("user_id"));
             review.setFilmId(sqlRowSet.getInt("film_id"));
             review.setUseful(sqlRowSet.getInt("useful"));
-            int likes = this.getLikesCount(review);
-            int dislikes = this.getDisLikesCount(review);
+            int likes = this.getLikesCount(review.getReviewId());
+            int dislikes = this.getDisLikesCount(review.getReviewId());
             review.setUseful(likes - dislikes);
             return review;
         }
@@ -67,21 +68,71 @@ public class ReviewRepository {
     }
 
     public List<Review> getAllReviewsByFilmId(Integer filmId, Integer count) {
-        if (count == null) {
-            count = 10;
+        if (count == null && filmId != null) {
+            return this.getAllFilmsWithoutCount(filmId);
         }
-        String sql = "select * from reviews where film_id = ? order by useful desc limit (?)";
-        List<Review> reviews = jdbcTemplate.query(sql, (rs, rowNum) -> Review.builder()
+        if (filmId == null && count != null) {
+            return this.getAllFilmsWithoutIdFilm(count);
+        }
+        if (count != null && filmId != null) {
+            return this.getAllReviewsWithParams(filmId, count);
+        }
+        return this.getAllReviewsWithoutParams();
+    }
+
+    private List<Review> getAllFilmsWithoutCount(Integer filmId) {
+        List<Review> reviews = new ArrayList<>();
+        String sql = "select * from reviews where film_id = ? order by useful limit (?)";
+        reviews = jdbcTemplate.query(sql, (rs, rowNum) -> Review.builder()
                 .reviewId(rs.getInt("id"))
                 .content(rs.getString("content"))
                 .isPositive(rs.getBoolean("is_positive"))
                 .filmId(rs.getInt("film_id"))
                 .userId(rs.getInt("user_id"))
-                .useful(rs.getInt("useful"))
+                .useful(this.getLikesCount(rs.getInt("id")) - this.getDisLikesCount(rs.getInt("id")))
+                .build(), filmId, 10);
+        return reviews;
+    }
+
+    private List<Review> getAllFilmsWithoutIdFilm(int count) {
+        List<Review> reviews = new ArrayList<>();
+        String sql ="select * from reviews order by useful limit (?)";
+        reviews = jdbcTemplate.query(sql, (rs, rowNum) -> Review.builder()
+                .reviewId(rs.getInt("id"))
+                .content(rs.getString("content"))
+                .isPositive(rs.getBoolean("is_positive"))
+                .filmId(rs.getInt("film_id"))
+                .userId(rs.getInt("user_id"))
+                .useful(this.getLikesCount(rs.getInt("id")) - this.getDisLikesCount(rs.getInt("id")))
+                .build(), count);
+        return reviews;
+    }
+
+    private List<Review> getAllReviewsWithParams(Integer filmId, Integer count) {
+        List<Review> reviews = new ArrayList<>();
+        String sql = "select * from reviews where film_id = ? order by useful limit (?)";
+        reviews = jdbcTemplate.query(sql, (rs, rowNum) -> Review.builder()
+                .reviewId(rs.getInt("id"))
+                .content(rs.getString("content"))
+                .isPositive(rs.getBoolean("is_positive"))
+                .filmId(rs.getInt("film_id"))
+                .userId(rs.getInt("user_id"))
+                .useful(this.getLikesCount(rs.getInt("id")) - this.getDisLikesCount(rs.getInt("id")))
                 .build(), filmId, count);
-        if (reviews.isEmpty()) {
-            throw new NotFoundException("Отзывы с для фильма с id " + filmId + " не найдены");
-        }
+        return reviews;
+    }
+
+    public List<Review> getAllReviewsWithoutParams() {
+        List<Review> reviews = new ArrayList<>();
+        String sql = "select * from reviews order by useful desc";
+        reviews = jdbcTemplate.query(sql, (rs, rowNum) -> Review.builder()
+                .reviewId(rs.getInt("id"))
+                .content(rs.getString("content"))
+                .isPositive(rs.getBoolean("is_positive"))
+                .filmId(rs.getInt("film_id"))
+                .userId(rs.getInt("user_id"))
+                .useful(this.getLikesCount(rs.getInt("id")) - this.getDisLikesCount(rs.getInt("id")))
+                .build());
         return reviews;
     }
 
@@ -99,10 +150,10 @@ public class ReviewRepository {
         this.update(review);
     }
 
-    private int getLikesCount(Review review) {
+    private int getLikesCount(int id) {
         int likes = 0;
         String sql = "select count(user_id) as likes from reviews_likes where review_id = ? and review_like = 1";
-        SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet(sql, review.getReviewId());
+        SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet(sql, id);
         while (sqlRowSet.next()) {
             likes = sqlRowSet.getInt("likes");
         }
@@ -123,12 +174,12 @@ public class ReviewRepository {
         this.update(review);
     }
 
-    private int getDisLikesCount(Review review) {
+    private int getDisLikesCount(int id) {
         int dislikes = 0;
         String sql = "select count(user_id) as dislikes from reviews_likes where review_id = ? and review_like = -1";
-        SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet(sql, review.getReviewId());
+        SqlRowSet sqlRowSet = jdbcTemplate.queryForRowSet(sql, id);
         while (sqlRowSet.next()) {
-            dislikes = sqlRowSet.getInt("dislikes") * -1;
+            dislikes = sqlRowSet.getInt("dislikes");
         }
         return dislikes;
     }

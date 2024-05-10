@@ -43,6 +43,11 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     @Override
+    public List<Review> getAllReviews() {
+        return repository.getAllReviewsWithoutParams();
+    }
+
+    @Override
     public void addLikeReview(Integer id, Integer userId) {
         repository.addLikeReview(id, userId);
     }
