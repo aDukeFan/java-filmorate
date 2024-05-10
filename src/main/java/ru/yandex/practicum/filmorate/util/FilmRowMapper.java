@@ -4,9 +4,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.model.*;
 import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Rating;
 
 import java.util.Comparator;
 import java.util.HashSet;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class FilmRowMapper {
+
     private final JdbcTemplate template;
 
     public FilmRowMapper(JdbcTemplate template) {
@@ -34,8 +36,7 @@ public class FilmRowMapper {
                         .genres(setGenresFromDb(rs.getInt("id")))
                         .mpa(setRatingFromDb(rs.getInt("id")))
                         .directors(setDirectorsFromDb(rs.getInt("id")))
-                        .build()
-        );
+                        .build());
     }
 
     private Set<Integer> setLikesUsersFromDb(int filmId) {
@@ -50,7 +51,6 @@ public class FilmRowMapper {
         }
         return likes;
     }
-
 
     private Set<Genre> setGenresFromDb(int filmId) {
         Set<Genre> genres = new LinkedHashSet<>();
@@ -68,7 +68,6 @@ public class FilmRowMapper {
                     .name(sqlRowSet.getString("name"))
                     .build());
         }
-
         return genres.stream()
                 .sorted(Comparator.comparing(Genre::getId))
                 .collect(Collectors.toSet());
@@ -91,11 +90,10 @@ public class FilmRowMapper {
                 Rating.builder()
                         .id(rs.getInt("id"))
                         .name(rs.getString("name"))
-                        .build()
-        );
+                        .build());
     }
-    
-    private Set<Director> setDirectorsFromDb(int filmId){
+
+    private Set<Director> setDirectorsFromDb(int filmId) {
         Set<Director> directors = new HashSet<>();
         SqlRowSet sqlRowSet = template.queryForRowSet(
                 "SELECT * " +
@@ -111,7 +109,6 @@ public class FilmRowMapper {
                     .name(sqlRowSet.getString("name"))
                     .build());
         }
-
         return directors.stream()
                 .sorted(Comparator.comparing(Director::getId))
                 .collect(Collectors.toSet());
