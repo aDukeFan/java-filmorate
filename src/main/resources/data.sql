@@ -11,3 +11,18 @@ insert into genres (name) values ('Мультфильм');
 insert into genres (name) values ('Триллер');
 insert into genres (name) values ('Документальный');
 insert into genres (name) values ('Боевик');
+
+insert into entities(name) values ('user');
+insert into entities(name) values ('film');
+insert into entities(name) values ('review');
+
+insert into entities(name) values ('user');
+insert into entities(name) values ('film');
+
+insert into events(name) values ('LIKE');
+insert into events(name) values ('REVIEW');
+insert into events(name) values ('FRIEND');
+
+insert into operations(name) values ('REMOVE');
+insert into operations(name) values ('ADD');
+insert into operations(name) values ('UPDATE');
