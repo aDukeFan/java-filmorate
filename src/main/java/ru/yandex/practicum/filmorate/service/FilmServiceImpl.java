@@ -65,4 +65,9 @@ public class FilmServiceImpl implements FilmService {
     public void delFilmById(int filmId) {
          filmRepository.delFilmById(filmId);
     }
+
+    @Override
+    public List<Film> getCommonFilms(int userId, int friendId) {
+        return filmRepository.getCommonFilms(userId, friendId);
+    }
 }

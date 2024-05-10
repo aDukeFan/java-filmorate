@@ -24,4 +24,6 @@ public interface FilmService {
     List<Film> getFilmsByDirectorOrTitle(String query, String param);
 
     void delFilmById(int filmId);
+
+    List<Film> getCommonFilms(int userId, int friendId);
 }
