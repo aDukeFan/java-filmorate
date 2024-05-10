@@ -48,8 +48,10 @@ public class FilmController {
     }
 
     @GetMapping("popular") //Если значение параметра count не задано, верните первые 10.
-    public List<Film> findTopPopularFilms(@RequestParam(required = false, defaultValue = "10") int count) {
-        return filmService.getTopPopularFilms(count);
+    public List<Film> findTopPopularFilms(@RequestParam(required = false, defaultValue = "10") int count,
+                                          @RequestParam(required = false, defaultValue = "0") int genreId,
+                                          @RequestParam(required = false, defaultValue = "0") int year) {
+        return filmService.getTopPopularFilms(count, genreId, year);
     }
 
     @GetMapping("/director/{directorId}")
@@ -64,7 +66,7 @@ public class FilmController {
 
     @DeleteMapping("/{filmId}")
     public void delFilmById(@PathVariable Integer filmId) {
-         filmService.delFilmById(filmId);
+        filmService.delFilmById(filmId);
     }
 
     @GetMapping("common")
