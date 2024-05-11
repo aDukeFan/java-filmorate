@@ -10,7 +10,9 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
@@ -21,7 +23,6 @@ public class ReviewRepository {
     private JdbcTemplate template;
 
     public Review create(Review review) {
-        //useful не должно быть в таблице reviews
         log.info("на сохранение получен отзыв с userId: {} filmId: {}",
                 review.getUserId(),
                 review.getFilmId());
@@ -37,7 +38,7 @@ public class ReviewRepository {
         Integer reviewId = template.queryForObject(sqlForGettingId, Integer.class);
         review.setReviewId(reviewId);
         log.info("Создан отзыв с id {}", review.getReviewId());
-        return review; // почему-то не создатеся review с id = 2, после первого сразу третий идет (?)
+        return review;
     }
 
     public Review update(Review review) {
@@ -48,7 +49,7 @@ public class ReviewRepository {
                 review.getIsPositive(),
                 review.getReviewId());
         log.info("Обновлен отзыв с id {}", review.getReviewId());
-        return getReviewById(review.getReviewId()); // в тесте film_id и user_id увеличиваются после обновления (?)
+        return getReviewById(review.getReviewId());
     }
 
     public void delete(Integer id) {
@@ -85,72 +86,72 @@ public class ReviewRepository {
 
     private List<Review> getAllReviewsByFilmIdAndCount(Integer filmId, Integer count) {
         return template.query("SELECT " +
-                        "r.id AS id, " +
-                        "r.content AS content, " +
-                        "r.is_positive AS is_positive, " +
-                        "r.user_id AS user_id, " +
-                        "r.film_id AS film_id, " +
-                        "sum(rr.useful) AS useful " +
-                        "FROM reviews AS r " +
-                        "LEFT JOIN reviews_rates AS rr ON rr.review_id = r.id " +
-                        "WHERE r.film_id = ? " +
-                        "GROUP BY id " +
-                        "ORDER BY useful DESC " +
-                        "LIMIT (?)",
-                (rs, rowNum) -> Review.builder()
-                .reviewId(rs.getInt("id"))
-                .content(rs.getString("content"))
-                .isPositive(rs.getBoolean("is_positive"))
-                .filmId(rs.getInt("film_id"))
-                .userId(rs.getInt("user_id"))
-                .useful(rs.getInt("useful"))
-                .build(), filmId, count);
+                                "r.id AS id, " +
+                                "r.content AS content, " +
+                                "r.is_positive AS is_positive, " +
+                                "r.user_id AS user_id, " +
+                                "r.film_id AS film_id, " +
+                                "sum(rr.useful) AS useful " +
+                                "FROM reviews AS r " +
+                                "LEFT JOIN reviews_rates AS rr ON rr.review_id = r.id " +
+                                "WHERE r.film_id = ? " +
+                                "GROUP BY id " +
+                                "ORDER BY useful DESC " +
+                                "LIMIT (?)",
+                        (rs, rowNum) -> Review.builder()
+                                .reviewId(rs.getInt("id"))
+                                .content(rs.getString("content"))
+                                .isPositive(rs.getBoolean("is_positive"))
+                                .filmId(rs.getInt("film_id"))
+                                .userId(rs.getInt("user_id"))
+                                .useful(rs.getInt("useful"))
+                                .build(), filmId, count).stream()
+                .sorted(Comparator.comparingInt(Review::getUseful).reversed())
+                .collect(Collectors.toList());
     }
-
-
 
     private List<Review> getAllReviewsByCount(int count) {
         return template.query("SELECT " +
-                        "r.id AS id, " +
-                        "r.content AS content, " +
-                        "r.is_positive AS is_positive, " +
-                        "r.user_id AS user_id, " +
-                        "r.film_id AS film_id, " +
-                        "sum(rr.useful) AS useful " +
-                        "FROM reviews AS r " +
-                        "LEFT JOIN reviews_rates AS rr ON rr.review_id = r.id " +
-                        "GROUP BY id " +
-                        "ORDER BY useful ASC " +
-                        "LIMIT (?)",
-                (rs, rowNum) -> Review.builder()
-                        .reviewId(rs.getInt("id"))
-                        .content(rs.getString("content"))
-                        .isPositive(rs.getBoolean("is_positive"))
-                        .filmId(rs.getInt("film_id"))
-                        .userId(rs.getInt("user_id"))
-                        .useful(rs.getInt("useful"))
-                        .build(), count);
+                                "r.id AS id, " +
+                                "r.content AS content, " +
+                                "r.is_positive AS is_positive, " +
+                                "r.user_id AS user_id, " +
+                                "r.film_id AS film_id, " +
+                                "sum(rr.useful) AS useful " +
+                                "FROM reviews AS r " +
+                                "LEFT JOIN reviews_rates AS rr ON rr.review_id = r.id " +
+                                "GROUP BY id " +
+                                "LIMIT (?)",
+                        (rs, rowNum) -> Review.builder()
+                                .reviewId(rs.getInt("id"))
+                                .content(rs.getString("content"))
+                                .isPositive(rs.getBoolean("is_positive"))
+                                .filmId(rs.getInt("film_id"))
+                                .userId(rs.getInt("user_id"))
+                                .useful(rs.getInt("useful"))
+                                .build(), count).stream()
+                .sorted(Comparator.comparingInt(Review::getUseful).reversed())
+                .collect(Collectors.toList());
     }
 
     public void addLikeReview(Integer id, Integer userId) {
         String sql = "insert into reviews_rates (review_id, user_id, useful) values (?, ?, ?)";
-        template.update(sql, id, userId, 1); // referential integrity(?)
+        template.update(sql, id, userId, 1);
         Review review = this.getReviewById(id);
         review.setUseful(this.getReviewRate(review.getReviewId()));
+        this.update(review);
+    }
+
+    public void addDisLikeToReview(Integer id, Integer userId) {
+        String sql = "insert into reviews_rates(review_id, user_id, useful) values (?, ?, ?)";
+        template.update(sql, id, userId, -1);
+        Review review = this.getReviewById(id);
         this.update(review);
     }
 
     public void deleteLikeReview(Integer id, Integer userId) {
         String sql = "delete from reviews_rates where review_id = ? and user_id = ? and useful = 1";
         template.update(sql, id, userId);
-        Review review = this.getReviewById(id);
-        this.update(review);
-    }
-
-
-    public void addDisLikeToReview(Integer id, Integer userId) {
-        String sql = "insert into reviews_rates(review_id, user_id, useful) values (?, ?, ?)";
-        template.update(sql, id, userId, -1);
         Review review = this.getReviewById(id);
         this.update(review);
     }
@@ -169,9 +170,6 @@ public class ReviewRepository {
         while (sqlRowSet.next()) {
             count = sqlRowSet.getInt("result");
         }
-        //    count += template.queryForObject(
-        //          "select sum(useful) as result from reviews_rates where review_id = ?",
-        //           Integer.class, reviewId);
         return count;
     }
 

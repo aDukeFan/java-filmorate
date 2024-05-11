@@ -41,7 +41,6 @@ public class ReviewController {
         return reviewService.getAll(filmId, count);
     }
 
-
     @PutMapping("/{id}/like/{userId}")
     public void addLikeReview(@PathVariable Integer id, @PathVariable Integer userId) {
         reviewService.addLikeReview(id, userId);
