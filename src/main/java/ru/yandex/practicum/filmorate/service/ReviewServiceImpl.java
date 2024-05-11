@@ -40,7 +40,7 @@ public class ReviewServiceImpl implements ReviewService{
 
     @Override
     public List<Review> getAllReviews() {
-        return repository.getAllReviewsWithoutParams();
+        return repository.getAll();
     }
 
     @Override

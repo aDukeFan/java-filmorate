@@ -1,15 +1,12 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.service.ReviewService;
 
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/reviews")
@@ -39,7 +36,8 @@ public class ReviewController {
     }
 
     @GetMapping()
-    public List<Review> getAllReviewsByFilmId(@RequestParam(required = false) Integer filmId, @RequestParam(required = false) Integer count) {
+    public List<Review> getAllReviewsByFilmId(@RequestParam(required = false, defaultValue = "-1") Integer filmId,
+                                              @RequestParam(required = false, defaultValue = "10") Integer count) {
         return reviewService.getAllReviewsByFilmId(filmId, count);
     }
 
@@ -50,17 +48,17 @@ public class ReviewController {
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public void deleteLikeReview(@PathVariable Integer id,@PathVariable Integer userId) {
+    public void deleteLikeReview(@PathVariable Integer id, @PathVariable Integer userId) {
         reviewService.deleteLikeReview(id, userId);
     }
 
     @PutMapping("/{id}/dislike/{userId}")
-    public void addDisLikeReview(@PathVariable Integer id,@PathVariable Integer userId) {
+    public void addDisLikeReview(@PathVariable Integer id, @PathVariable Integer userId) {
         reviewService.addDisLikeReview(id, userId);
     }
 
     @DeleteMapping("/{id}/dislike/{userId}")
-    public void deleteDisLikeReview(@PathVariable Integer id,@PathVariable Integer userId) {
+    public void deleteDisLikeReview(@PathVariable Integer id, @PathVariable Integer userId) {
         reviewService.deleteDisLikeReview(id, userId);
     }
 }

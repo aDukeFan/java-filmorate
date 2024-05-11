@@ -22,13 +22,14 @@ public class ReviewRepository {
     private JdbcTemplate template;
 
     public Review create(Review review) {
+        //useful не должно быть в таблице reviews
         log.info("на сохранение получен отзыв с userId: {} filmId: {}",
                 review.getUserId(), review.getFilmId());
         throwNotFoundExceptionForNonExistentId(review.getUserId(), "users");
         throwNotFoundExceptionForNonExistentId(review.getFilmId(), "films");
-        String sql = "insert into reviews(content, is_positive, user_id, film_id, useful) values(?,?,?,?,?)";
+        String sql = "insert into reviews(content, is_positive, user_id, film_id) values(?,?,?,?)";
         template.update(sql, review.getContent(), review.getIsPositive(),
-                review.getUserId(), review.getFilmId(), review.getUseful()); // добавил userful в занесение
+                review.getUserId(), review.getFilmId());
         String sqlForGettingId = "select max(id) as last from reviews";
         Integer reviewId = template.queryForObject(sqlForGettingId, Integer.class);
         review.setReviewId(reviewId);
@@ -37,10 +38,15 @@ public class ReviewRepository {
     }
 
     public Review update(Review review) {
-        String sql = "update reviews set content = ?, is_positive = ?, user_id = ?, film_id = ?, useful = ? where id = ?";
-        template.update(sql, review.getContent(), review.getIsPositive(), review.getUserId(), review.getFilmId(),
-                review.getUseful(), review.getReviewId());
+        String sql = "update reviews set content = ?, is_positive = ?, user_id = ?, film_id = ? where id = ?";
+        template.update(sql,
+                review.getContent(),
+                review.getIsPositive(),
+                review.getUserId(),
+                review.getFilmId(),
+                review.getReviewId());
         log.info("Обновлен отзыв с id {}", review.getReviewId());
+        review.setUseful(getReviewRate(review.getReviewId()));
         return review; // в тесте film_id и user_id увеличиваются после обновления (?)
     }
 
@@ -51,6 +57,7 @@ public class ReviewRepository {
     }
 
     public Review getReviewById(Integer id) {
+        throwNotFoundExceptionForNonExistentId(id, "reviews");
         String sql = "select * from reviews where id = ?";
         SqlRowSet sqlRowSet = template.queryForRowSet(sql, id);
         while (sqlRowSet.next()) {
@@ -60,9 +67,6 @@ public class ReviewRepository {
             review.setIsPositive(sqlRowSet.getBoolean("is_positive"));
             review.setUserId(sqlRowSet.getInt("user_id"));
             review.setFilmId(sqlRowSet.getInt("film_id"));
-            review.setUseful(sqlRowSet.getInt("useful"));
-//            int likes = this.getLikesCount(review.getReviewId());
-//            int dislikes = this.getDisLikesCount(review.getReviewId());
             review.setUseful(this.getReviewRate(review.getReviewId()));
             return review;
         }
@@ -70,79 +74,86 @@ public class ReviewRepository {
     }
 
     public List<Review> getAllReviewsByFilmId(Integer filmId, Integer count) {
-        if (count == null && filmId != null) {
-            return this.getAllFilmsWithoutCount(filmId);
+        if (filmId == -1) {
+            return getAllReviewsByCount(count);
+        } else {
+            throwNotFoundExceptionForNonExistentId(filmId, "films");
+            return getAllReviewsByFilmIdAndCount(filmId, count);
         }
-        if (filmId == null && count != null) {
-            return this.getAllFilmsWithoutIdFilm(count);
-        }
-        if (count != null && filmId != null) {
-            return this.getAllReviewsWithParams(filmId, count);
-        }
-        return this.getAllReviewsWithoutParams();
     }
 
-    private List<Review> getAllFilmsWithoutCount(Integer filmId) {
-        List<Review> reviews = new ArrayList<>();
-        String sql = "select * from reviews where film_id = ? order by useful limit (?)";
-        reviews = template.query(sql, (rs, rowNum) -> Review.builder()
+    private List<Review> getAllReviewsByFilmIdAndCount(Integer filmId, Integer count) {
+        return template.query("SELECT " +
+                        "r.id AS id, " +
+                        "r.content AS content, " +
+                        "r.is_positive AS is_positive, " +
+                        "r.user_id AS user_id, " +
+                        "r.film_id AS film_id, " +
+                        "sum(rr.useful) AS useful " +
+                        "FROM reviews AS r " +
+                        "LEFT JOIN reviews_rates AS rr ON rr.review_id = r.id " +
+                        "WHERE r.film_id = ? " +
+                        "GROUP BY id " +
+                        "ORDER BY useful DESC " +
+                        "LIMIT (?)",
+                (rs, rowNum) -> Review.builder()
                 .reviewId(rs.getInt("id"))
                 .content(rs.getString("content"))
                 .isPositive(rs.getBoolean("is_positive"))
                 .filmId(rs.getInt("film_id"))
                 .userId(rs.getInt("user_id"))
-                .useful(this.getReviewRate(rs.getInt("id")))
-                //this.getLikesCount(rs.getInt("id")) - this.getDisLikesCount(rs.getInt("id")))
-                .build(), filmId, 10);
-        return reviews;
-    }
-
-    private List<Review> getAllFilmsWithoutIdFilm(int count) {
-        List<Review> reviews = new ArrayList<>();
-        String sql ="select * from reviews order by useful limit (?)";
-        reviews = template.query(sql, (rs, rowNum) -> Review.builder()
-                .reviewId(rs.getInt("id"))
-                .content(rs.getString("content"))
-                .isPositive(rs.getBoolean("is_positive"))
-                .filmId(rs.getInt("film_id"))
-                .userId(rs.getInt("user_id"))
-                .useful(this.getReviewRate(rs.getInt("id")))
-                //this.getLikesCount(rs.getInt("id")) - this.getDisLikesCount(rs.getInt("id")))
-                .build(), count);
-        return reviews;
-    }
-
-    private List<Review> getAllReviewsWithParams(Integer filmId, Integer count) {
-        List<Review> reviews = new ArrayList<>();
-        String sql = "select * from reviews where film_id = ? order by useful limit (?)";
-        reviews = template.query(sql, (rs, rowNum) -> Review.builder()
-                .reviewId(rs.getInt("id"))
-                .content(rs.getString("content"))
-                .isPositive(rs.getBoolean("is_positive"))
-                .filmId(rs.getInt("film_id"))
-                .userId(rs.getInt("user_id"))
-                .useful(this.getReviewRate(rs.getInt("id")))
-                // this.getLikesCount(rs.getInt("id")) - this.getDisLikesCount(rs.getInt("id")))
+                .useful(rs.getInt("useful"))
                 .build(), filmId, count);
-        return reviews;
     }
 
-    public List<Review> getAllReviewsWithoutParams() {
-        List<Review> reviews = new ArrayList<>();
-        String sql = "select * from reviews order by useful desc";
-        reviews = template.query(sql, (rs, rowNum) -> Review.builder()
-                .reviewId(rs.getInt("id"))
-                .content(rs.getString("content"))
-                .isPositive(rs.getBoolean("is_positive"))
-                .filmId(rs.getInt("film_id"))
-                .userId(rs.getInt("user_id"))
-                .useful(this.getReviewRate(rs.getInt("id")))
-                .build());
-        return reviews;
+
+
+    private List<Review> getAllReviewsByCount(int count) {
+        return template.query("SELECT " +
+                        "r.id AS id, " +
+                        "r.content AS content, " +
+                        "r.is_positive AS is_positive, " +
+                        "r.user_id AS user_id, " +
+                        "r.film_id AS film_id, " +
+                        "sum(rr.useful) AS useful " +
+                        "FROM reviews AS r " +
+                        "LEFT JOIN reviews_rates AS rr ON rr.review_id = r.id " +
+                        "GROUP BY id " +
+                        "ORDER BY useful DESC " +
+                        "LIMIT (?)",
+                (rs, rowNum) -> Review.builder()
+                        .reviewId(rs.getInt("id"))
+                        .content(rs.getString("content"))
+                        .isPositive(rs.getBoolean("is_positive"))
+                        .filmId(rs.getInt("film_id"))
+                        .userId(rs.getInt("user_id"))
+                        .useful(rs.getInt("useful"))
+                        .build(), count);
+    }
+
+    public List<Review> getAll() {
+        return template.query("SELECT " +
+                        "r.id AS id, " +
+                        "r.content AS content, " +
+                        "r.is_positive AS is_positive, " +
+                        "r.user_id AS user_id, " +
+                        "r.film_id AS film_id, " +
+                        "sum(rr.useful) AS useful " +
+                        "FROM reviews AS r " +
+                        "LEFT JOIN reviews_rates AS rr ON rr.review_id = r.id " +
+                        "GROUP BY id",
+                (rs, rowNum) -> Review.builder()
+                        .reviewId(rs.getInt("id"))
+                        .content(rs.getString("content"))
+                        .isPositive(rs.getBoolean("is_positive"))
+                        .filmId(rs.getInt("film_id"))
+                        .userId(rs.getInt("user_id"))
+                        .useful(rs.getInt("useful"))
+                        .build());
     }
 
     public void addLikeReview(Integer id, Integer userId) {
-        String sql = "insert into reviews_rates(review_id, user_id, useful) values (?, ?, ?)";
+        String sql = "insert into reviews_rates (review_id, user_id, useful) values (?, ?, ?)";
         template.update(sql, id, userId, 1); // referential integrity(?)
         Review review = this.getReviewById(id);
         review.setUseful(this.getReviewRate(review.getReviewId()));
@@ -178,31 +189,11 @@ public class ReviewRepository {
         while (sqlRowSet.next()) {
             count = sqlRowSet.getInt("result");
         }
-    //    count += template.queryForObject(
-      //          "select sum(useful) as result from reviews_rates where review_id = ?",
-     //           Integer.class, reviewId);
+        //    count += template.queryForObject(
+        //          "select sum(useful) as result from reviews_rates where review_id = ?",
+        //           Integer.class, reviewId);
         return count;
     }
-
-//    private int getLikesCount(int id) {
-//        int likes = 0;
-//        String sql = "select count(user_id) as likes from reviews_likes where review_id = ? and review_like = 1";
-//        SqlRowSet sqlRowSet = template.queryForRowSet(sql, id);
-//        while (sqlRowSet.next()) {
-//            likes = sqlRowSet.getInt("likes");
-//        }
-//        return likes;
-//    }
-
-//    private int getDisLikesCount(int id) {
-//        int dislikes = 0;
-//        String sql = "select count(user_id) as dislikes from reviews_likes where review_id = ? and review_like = -1";
-//        SqlRowSet sqlRowSet = template.queryForRowSet(sql, id);
-//        while (sqlRowSet.next()) {
-//            dislikes = sqlRowSet.getInt("dislikes");
-//        }
-//        return dislikes;
-//    }
 
     private void throwNotFoundExceptionForNonExistentId(int id, String tableName) {
         String select = "select exists (select id from " + tableName + " where id = ?) as match";
