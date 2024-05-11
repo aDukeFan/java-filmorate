@@ -45,7 +45,9 @@ public class ReviewRepository {
         throwNotFoundExceptionForNonExistentId(review.getReviewId(), "reviews");
         throwNotFoundExceptionForNonExistentId(review.getFilmId(), "films");
         throwNotFoundExceptionForNonExistentId(review.getUserId(), "users");
-        String sql = "update reviews set content = ?, is_positive = ?, user_id = ?, film_id = ? where id = ?";
+        String sql = "UPDATE reviews " +
+                "SET content = ?, is_positive = ? " +
+                "WHERE id = ? AND user_id = ? AND film_id = ?";
         template.update(sql,
                 review.getContent(),
                 review.getIsPositive(),
