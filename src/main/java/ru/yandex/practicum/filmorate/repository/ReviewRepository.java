@@ -26,14 +26,14 @@ public class ReviewRepository {
                 review.getUserId(), review.getFilmId());
         throwNotFoundExceptionForNonExistentId(review.getUserId(), "users");
         throwNotFoundExceptionForNonExistentId(review.getFilmId(), "films");
-        String sql = "insert into reviews(content, is_positive, user_id, film_id) values(?,?,?,?)";
+        String sql = "insert into reviews(content, is_positive, user_id, film_id, useful) values(?,?,?,?,?)";
         template.update(sql, review.getContent(), review.getIsPositive(),
-                review.getUserId(), review.getFilmId());
+                review.getUserId(), review.getFilmId(), review.getUseful()); // добавил userful в занесение
         String sqlForGettingId = "select max(id) as last from reviews";
         Integer reviewId = template.queryForObject(sqlForGettingId, Integer.class);
         review.setReviewId(reviewId);
         log.info("Создан отзыв с id {}", review.getReviewId());
-        return review;
+        return review; // почему-то не создатеся review с id = 2, после первого сразу третий идет (?)
     }
 
     public Review update(Review review) {
@@ -41,7 +41,7 @@ public class ReviewRepository {
         template.update(sql, review.getContent(), review.getIsPositive(), review.getUserId(), review.getFilmId(),
                 review.getUseful(), review.getReviewId());
         log.info("Обновлен отзыв с id {}", review.getReviewId());
-        return review;
+        return review; // в тесте film_id и user_id увеличиваются после обновления (?)
     }
 
     public void delete(Integer id) {
