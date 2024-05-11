@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -42,21 +41,14 @@ public class ReviewRepository {
     }
 
     public Review update(Review review) {
-        throwNotFoundExceptionForNonExistentId(review.getReviewId(), "reviews");
-        throwNotFoundExceptionForNonExistentId(review.getFilmId(), "films");
-        throwNotFoundExceptionForNonExistentId(review.getUserId(), "users");
-        String sql = "UPDATE reviews " +
-                "SET content = ?, is_positive = ? " +
-                "WHERE id = ? AND user_id = ? AND film_id = ?";
-        template.update(sql,
+        template.update("UPDATE reviews " +
+                        "SET content = ?, is_positive = ? " +
+                        "WHERE id = ?",
                 review.getContent(),
                 review.getIsPositive(),
-                review.getUserId(),
-                review.getFilmId(),
                 review.getReviewId());
         log.info("Обновлен отзыв с id {}", review.getReviewId());
-        review.setUseful(getReviewRate(review.getReviewId()));
-        return review; // в тесте film_id и user_id увеличиваются после обновления (?)
+        return getReviewById(review.getReviewId()); // в тесте film_id и user_id увеличиваются после обновления (?)
     }
 
     public void delete(Integer id) {
@@ -76,13 +68,13 @@ public class ReviewRepository {
             review.setIsPositive(sqlRowSet.getBoolean("is_positive"));
             review.setUserId(sqlRowSet.getInt("user_id"));
             review.setFilmId(sqlRowSet.getInt("film_id"));
-            review.setUseful(this.getReviewRate(review.getReviewId()));
+            review.setUseful(getReviewRate(review.getReviewId()));
             return review;
         }
         return null;
     }
 
-    public List<Review> getAllReviewsByFilmId(Integer filmId, Integer count) {
+    public List<Review> getAll(Integer filmId, Integer count) {
         if (filmId == -1) {
             return getAllReviewsByCount(count);
         } else {
@@ -128,7 +120,7 @@ public class ReviewRepository {
                         "FROM reviews AS r " +
                         "LEFT JOIN reviews_rates AS rr ON rr.review_id = r.id " +
                         "GROUP BY id " +
-                        "ORDER BY useful DESC " +
+                        "ORDER BY useful ASC " +
                         "LIMIT (?)",
                 (rs, rowNum) -> Review.builder()
                         .reviewId(rs.getInt("id"))
@@ -138,27 +130,6 @@ public class ReviewRepository {
                         .userId(rs.getInt("user_id"))
                         .useful(rs.getInt("useful"))
                         .build(), count);
-    }
-
-    public List<Review> getAll() {
-        return template.query("SELECT " +
-                        "r.id AS id, " +
-                        "r.content AS content, " +
-                        "r.is_positive AS is_positive, " +
-                        "r.user_id AS user_id, " +
-                        "r.film_id AS film_id, " +
-                        "sum(rr.useful) AS useful " +
-                        "FROM reviews AS r " +
-                        "LEFT JOIN reviews_rates AS rr ON rr.review_id = r.id " +
-                        "GROUP BY id",
-                (rs, rowNum) -> Review.builder()
-                        .reviewId(rs.getInt("id"))
-                        .content(rs.getString("content"))
-                        .isPositive(rs.getBoolean("is_positive"))
-                        .filmId(rs.getInt("film_id"))
-                        .userId(rs.getInt("user_id"))
-                        .useful(rs.getInt("useful"))
-                        .build());
     }
 
     public void addLikeReview(Integer id, Integer userId) {
@@ -204,7 +175,7 @@ public class ReviewRepository {
         return count;
     }
 
-    private void throwNotFoundExceptionForNonExistentId(int id, String tableName) {
+    private void throwNotFoundExceptionForNonExistentId(Integer id, String tableName) {
         String select = "select exists (select id from " + tableName + " where id = ?) as match";
         if (Boolean.FALSE.equals(template.queryForObject(select,
                 (rs, rowNum) -> rs.getBoolean("match"), id))) {

@@ -14,9 +14,7 @@ public interface ReviewService {
 
     public Review getReviewById(Integer id);
 
-    public List<Review> getAllReviewsByFilmId(Integer filmId, Integer count);
-
-    public List<Review> getAllReviews();
+    public List<Review> getAll(Integer filmId, Integer count);
 
     public void addLikeReview(Integer id, Integer userId);
 

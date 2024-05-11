@@ -34,13 +34,8 @@ public class ReviewServiceImpl implements ReviewService{
     }
 
     @Override
-    public List<Review> getAllReviewsByFilmId(Integer filmId, Integer count) {
-        return repository.getAllReviewsByFilmId(filmId, count);
-    }
-
-    @Override
-    public List<Review> getAllReviews() {
-        return repository.getAll();
+    public List<Review> getAll(Integer filmId, Integer count) {
+        return repository.getAll(filmId, count);
     }
 
     @Override

@@ -18,9 +18,11 @@ public class Review {
     private Integer reviewId;
     @NotNull
     private String content;
-    @NotNull(message = "isPositive shouldn't be null")
+    @NotNull
     private Boolean isPositive;
+    @NotNull
     private Integer userId;
+    @NotNull
     private Integer filmId;
     private int useful = 0;
 
