@@ -1,13 +1,13 @@
 package ru.yandex.practicum.filmorate.model;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Positive;
 
 @Getter
 @Setter
@@ -16,6 +16,7 @@ import javax.validation.constraints.Positive;
 @Slf4j
 public class Review {
     private Integer reviewId;
+    @NotNull
     private String content;
     @NotNull(message = "isPositive shouldn't be null")
     private Boolean isPositive;

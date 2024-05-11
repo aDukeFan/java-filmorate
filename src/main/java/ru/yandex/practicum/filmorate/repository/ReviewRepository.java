@@ -24,12 +24,16 @@ public class ReviewRepository {
     public Review create(Review review) {
         //useful не должно быть в таблице reviews
         log.info("на сохранение получен отзыв с userId: {} filmId: {}",
-                review.getUserId(), review.getFilmId());
+                review.getUserId(),
+                review.getFilmId());
         throwNotFoundExceptionForNonExistentId(review.getUserId(), "users");
         throwNotFoundExceptionForNonExistentId(review.getFilmId(), "films");
         String sql = "insert into reviews(content, is_positive, user_id, film_id) values(?,?,?,?)";
-        template.update(sql, review.getContent(), review.getIsPositive(),
-                review.getUserId(), review.getFilmId());
+        template.update(sql,
+                review.getContent(),
+                review.getIsPositive(),
+                review.getUserId(),
+                review.getFilmId());
         String sqlForGettingId = "select max(id) as last from reviews";
         Integer reviewId = template.queryForObject(sqlForGettingId, Integer.class);
         review.setReviewId(reviewId);
@@ -38,6 +42,9 @@ public class ReviewRepository {
     }
 
     public Review update(Review review) {
+        throwNotFoundExceptionForNonExistentId(review.getReviewId(), "reviews");
+        throwNotFoundExceptionForNonExistentId(review.getFilmId(), "films");
+        throwNotFoundExceptionForNonExistentId(review.getUserId(), "users");
         String sql = "update reviews set content = ?, is_positive = ?, user_id = ?, film_id = ? where id = ?";
         template.update(sql,
                 review.getContent(),
