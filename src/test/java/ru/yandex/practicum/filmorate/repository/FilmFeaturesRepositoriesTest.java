@@ -18,7 +18,7 @@ class FilmFeaturesRepositoriesTest {
 
     @Test
     void testGetGenreById() {
-        GenreRepository repository = new GenreRepository(template);
+        GenreRepository repository = new GenreRepository(template, null);
         Genre genre = new Genre().setId(7).setName("Экшн");
         repository.create(genre);
         Genre savedGenre = repository.getById(7);
