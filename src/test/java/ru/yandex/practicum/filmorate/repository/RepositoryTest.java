@@ -25,7 +25,7 @@ class RepositoryTest {
 
     @Test
     public void tests() {
-        FilmRepository repository = new FilmRepository(template);
+        FilmRepository repository = new FilmRepository(template, null);
         List<Film> filmsBeforeSaved = make3Films(repository);
         List<Film> savedFilms = repository.findAll();
         assertThat(savedFilms)

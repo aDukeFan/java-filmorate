@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.util;
+package ru.yandex.practicum.filmorate.util.mappers;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -9,11 +9,9 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Rating;
 
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 public class FilmRowMapper {
@@ -24,7 +22,7 @@ public class FilmRowMapper {
         this.template = template;
     }
 
-    public RowMapper<Film> filmRowMapper() {
+    public RowMapper<Film> mapper() {
         return ((rs, rowNum) ->
                 new Film()
                         .setId(rs.getInt("id"))

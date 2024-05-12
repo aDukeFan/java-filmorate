@@ -7,7 +7,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.util.GenreRowMapper;
+import ru.yandex.practicum.filmorate.util.mappers.GenreRowMapper;
 
 import java.sql.PreparedStatement;
 import java.util.List;

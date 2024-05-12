@@ -3,15 +3,17 @@ package ru.yandex.practicum.filmorate.repository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.util.FilmRowMapper;
+import ru.yandex.practicum.filmorate.util.mappers.FilmRowMapper;
+import ru.yandex.practicum.filmorate.util.mappers.UserRowMapper;
 
-import java.time.ZoneId;
+import java.sql.PreparedStatement;
 import java.util.*;
 
 @Component
@@ -21,37 +23,31 @@ public class UserRepository {
 
     private JdbcTemplate template;
     private FilmRowMapper filmRowMapper;
+    private UserRowMapper userRowMapper;
 
     public User create(User user) {
         if (user.getName().isEmpty()) {
             user.setName(user.getLogin());
         }
-        template.update(
-                "insert into users (name, login, email, birthday) values(?, ?, ?, ?)",
-                user.getName(),
-                user.getLogin(),
-                user.getEmail(),
-                Date.from(user.getBirthday().atStartOfDay(ZoneId.systemDefault()).toInstant()));
-        Integer userId = template.queryForObject(
-                "select max(id) as max from users", (rs, rowNum) -> rs.getInt("max"));
-        user.setId(userId);
-        log.info("save user '{}' to table 'users'", userId);
-        return user;
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        template.update(connection -> {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "insert into users (name, login, email, birthday) values(?, ?, ?, ?)",
+                    new String[]{"id"});
+            stmt.setString(1, user.getName());
+            stmt.setString(3, user.getEmail());
+            stmt.setString(2, user.getLogin());
+            stmt.setDate(4, java.sql.Date.valueOf(user.getBirthday()));
+            return stmt;
+        }, keyHolder);
+        return user.setId(Objects.requireNonNull(keyHolder.getKey()).intValue());
     }
 
     public User update(User user) {
         throwNotFoundExceptionForNonExistentUserId(user.getId());
         template.update(
                 "update users set name = ?, login = ?, email = ?, birthday = ? where id = ?",
-                user.getName(),
-                user.getLogin(),
-                user.getEmail(),
-                Date.from(user.getBirthday().atStartOfDay(ZoneId.systemDefault()).toInstant()),
-                user.getId());
-        List<Integer> followersList = template.query(
-                "select following_id from follows where followed_id = ?",
-                ((rs, rowNum) -> rs.getInt("following_id")), user.getId());
-        user.getFriends().addAll(followersList);
+                user.getName(), user.getLogin(), user.getEmail(), user.getBirthday(), user.getId());
         log.info("update user '{}' in table 'users'", user.getId());
         return user;
     }
@@ -59,20 +55,11 @@ public class UserRepository {
 
     public User getById(Integer id) {
         throwNotFoundExceptionForNonExistentUserId(id);
-        User user = template.queryForObject(
-                "select * from users where id = ?",
-                userWithoutFollowersRowMapper(), id);
-        setFollowersIdsFromDateBase(user);
-        log.info("show user '{}'", id);
-        return user;
+        return template.queryForObject("select * from users where id = ?", userRowMapper.mapper(), id);
     }
 
     public List<User> findAll() {
-        List<User> users = template.query(
-                "select * from users order by id asc",
-                userWithoutFollowersRowMapper());
-        users.forEach(this::setFollowersIdsFromDateBase);
-        return users;
+        return template.query("select * from users order by id asc", userRowMapper.mapper());
     }
 
     public User addFollow(Integer userId, Integer friendId) {
@@ -98,25 +85,23 @@ public class UserRepository {
     public List<User> getSameFollowers(Integer userId, Integer friendId) {
         throwNotFoundExceptionForNonExistentUserId(userId);
         throwNotFoundExceptionForNonExistentUserId(friendId);
-        List<User> sameFollowers = template.query(
-                "select * from users as u " +
-                        "join follows as f on f.following_id = u.id and f.followed_id = ? " +
-                        "join follows as friend_f on friend_f.following_id = u.id and friend_f.followed_id = ?",
-                userWithoutFollowersRowMapper(), userId, friendId);
-        sameFollowers.forEach(this::setFollowersIdsFromDateBase);
         log.info("show same followers of user '{}' and user '{}'", userId, friendId);
-        return sameFollowers;
+        return template.query(
+                "select * from users where id IN(" +
+                        "select following_id from follows where followed_id = ? and following_id in (" +
+                        "select following_id from follows where followed_id = ?))",
+                userRowMapper.mapper(),
+                friendId, userId);
     }
 
     public List<User> getFollowers(Integer userId) {
         throwNotFoundExceptionForNonExistentUserId(userId);
-        List<User> followers = template.query(
-                "select * from users as u " +
-                        "join follows as f on f.following_id = u.id and f.followed_id = ?",
-                userWithoutFollowersRowMapper(), userId);
-        followers.forEach(this::setFollowersIdsFromDateBase);
         log.info("show followers of user '{}'", userId);
-        return followers;
+        return template.query(
+                "select * from users where id in (" +
+                        "select distinct following_id from follows where followed_id = ?)",
+                userRowMapper.mapper(),
+                userId);
     }
 
     public List<Film> getRecommendations(Integer userId) {
@@ -145,44 +130,24 @@ public class UserRepository {
         }
         if (!recommendedFilms.isEmpty()) {
             recommendedFilms.removeAll(userLikesFilms);
-            template.execute(
-                    "drop table if exists recommended_films");
-            template.execute(
-                    "create local temporary table recommended_films (id int)");
+            template.execute("drop table if exists recommended_films");
+            template.execute("create local temporary table recommended_films (id int)");
 
             for (Integer film : recommendedFilms) {
-                template.update(
-                        "insert into recommended_films " +
-                                "values(?)", film);
+                template.update("insert into recommended_films values(?)", film);
             }
             List<Film> finalRecommend = template.query(
                     "select * " +
                             "from films " +
                             "where id IN " +
                             "(select * " +
-                            "from recommended_films)", filmRowMapper.filmRowMapper());
+                            "from recommended_films)", filmRowMapper.mapper());
 
-            template.execute(
-                    "drop table if exists recommended_films");
+            template.execute("drop table if exists recommended_films");
 
             return finalRecommend;
         }
         return Collections.emptyList();
-    }
-
-    private RowMapper<User> userWithoutFollowersRowMapper() {
-        return (rs, rowNum) -> new User()
-                .setId(rs.getInt("id"))
-                .setName(rs.getString("name"))
-                .setEmail(rs.getString("email"))
-                .setLogin(rs.getString("login"))
-                .setBirthday(rs.getDate("birthday").toLocalDate());
-    }
-
-    private void setFollowersIdsFromDateBase(User user) {
-        user.getFriends().addAll(template.query(
-                "select following_id from follows where followed_id = ?",
-                (rs, rowNum) -> rs.getInt("following_id"), user.getId()));
     }
 
     private void throwNotFoundExceptionForNonExistentUserId(int id) {

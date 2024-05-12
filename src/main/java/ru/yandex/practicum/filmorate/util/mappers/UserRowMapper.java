@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.util;
+package ru.yandex.practicum.filmorate.util.mappers;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -30,7 +30,7 @@ public class UserRowMapper {
         return friends;
     }
 
-    public RowMapper<User> userRowMapper() {
+    public RowMapper<User> mapper() {
         return ((rs, rowNum) ->
                 new User()
                         .setId(rs.getInt("id"))
