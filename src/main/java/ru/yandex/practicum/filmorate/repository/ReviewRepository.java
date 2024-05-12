@@ -44,6 +44,7 @@ public class ReviewRepository {
     public Review update(Review review) {
         throwNotFoundExceptionForNonExistentId(review.getReviewId(), "reviews");
         throwNotFoundExceptionForNonExistentId(review.getUserId(), "users");
+        if (isSameAuthorAndFilm(review.getReviewId(), review.getUserId(), review.getFilmId())) {
             template.update("UPDATE reviews " +
                             "SET content = ?, is_positive = ? " +
                             "WHERE id = ?",
@@ -52,6 +53,10 @@ public class ReviewRepository {
                     review.getReviewId());
             log.info("Обновлен отзыв с id {}", review.getReviewId());
             eventRepository.addEvent(review.getUserId(), review.getReviewId(), "REVIEW", "UPDATE");
+        } else {
+            log.info("нет ревью c id {} с автором {} на фильм {}",
+                    review.getReviewId(), review.getUserId(), review.getFilmId());
+        }
         return getReviewById(review.getReviewId());
     }
 
@@ -178,10 +183,10 @@ public class ReviewRepository {
         return count;
     }
 
-    private Boolean isSameAuthor(Integer reviewId, Integer userId) {
+    private Boolean isSameAuthorAndFilm(Integer reviewId, Integer userId, Integer filmId) {
         return Boolean.TRUE.equals(template.queryForObject(
-                "select exists (select * from reviews where id = ? and user_id = ?) as match",
-                (rs, rowNum) -> rs.getBoolean("match"), reviewId, userId));
+                "select exists (select * from reviews where id = ? and user_id = ? and film_id = ?) as match",
+                (rs, rowNum) -> rs.getBoolean("match"), reviewId, userId, filmId));
     }
 
     private void throwNotFoundExceptionForNonExistentId(Integer id, String tableName) {
