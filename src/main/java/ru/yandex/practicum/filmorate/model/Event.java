@@ -1,15 +1,15 @@
 package ru.yandex.practicum.filmorate.model;
 
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Data;
+import lombok.experimental.Accessors;
 import lombok.experimental.FieldDefaults;
 
 import java.sql.Timestamp;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Data
-@Builder
+@Accessors(chain = true)
 public class Event {
     Timestamp timeStamp;
     Integer userId;
