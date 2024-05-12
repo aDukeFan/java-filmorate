@@ -26,7 +26,6 @@ public class FeedServiceImpl implements FeedService{
 
     @Override
     public List<Event> get(Integer userId) {
-        List<Event> events = repository.getAllEvents();
         return repository.get(userId);
     }
 }
