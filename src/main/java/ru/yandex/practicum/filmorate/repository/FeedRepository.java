@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Feed;
 
 import java.util.ArrayList;
@@ -40,6 +41,20 @@ public class FeedRepository {
             feeds.add(feed);
         }
         return feeds;
+    }
+
+    public void recordAddFriend(Integer userId, Integer eventId, Integer entityId, String operation) {
+        throwNotFoundExceptionForNonExistentUserId(userId);
+        String sql = "insert into feed(user_id, event_type, entity_id, operation) values(?,?,?,?)";
+        template.update(sql, userId, eventId, entityId, operation);
+    }
+
+    private void throwNotFoundExceptionForNonExistentUserId(int id) {
+        if (Boolean.FALSE.equals(template.queryForObject(
+                "select exists (select id from users where id = ?) as match",
+                (rs, rowNum) -> rs.getBoolean("match"), id))) {
+            throw new NotFoundException("No users with such ID: " + id);
+        }
     }
 
 }
