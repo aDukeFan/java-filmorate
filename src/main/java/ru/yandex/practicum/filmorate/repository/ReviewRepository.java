@@ -1,8 +1,6 @@
 package ru.yandex.practicum.filmorate.repository;
 
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -15,7 +13,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
-@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @Component
 @AllArgsConstructor
 public class ReviewRepository {
@@ -45,16 +42,16 @@ public class ReviewRepository {
     }
 
     public Review update(Review review) {
-        this.throwNotFoundExceptionForNonExistentId(review.getReviewId(), "reviews");
-        template.update("UPDATE reviews " +
-                        "SET content = ?, is_positive = ? " +
-                        "WHERE id = ?",
-                review.getContent(),
-                review.getIsPositive(),
-                review.getReviewId());
-        log.info("Обновлен отзыв с id {}", review.getReviewId());
-        Review review1 = this.getReviewById(review.getReviewId());
-        eventRepository.addEvent(review1.getUserId(), review1.getReviewId(), "REVIEW", "UPDATE");
+        throwNotFoundExceptionForNonExistentId(review.getReviewId(), "reviews");
+        throwNotFoundExceptionForNonExistentId(review.getUserId(), "users");
+            template.update("UPDATE reviews " +
+                            "SET content = ?, is_positive = ? " +
+                            "WHERE id = ?",
+                    review.getContent(),
+                    review.getIsPositive(),
+                    review.getReviewId());
+            log.info("Обновлен отзыв с id {}", review.getReviewId());
+            eventRepository.addEvent(review.getUserId(), review.getReviewId(), "REVIEW", "UPDATE");
         return getReviewById(review.getReviewId());
     }
 
@@ -64,7 +61,6 @@ public class ReviewRepository {
         template.update(sql, id);
         log.info("Удален отзыв с id {}", id);
         eventRepository.addEvent(review.getUserId(), review.getReviewId(), "REVIEW", "REMOVE");
-
     }
 
     public Review getReviewById(Integer id) {
@@ -148,28 +144,28 @@ public class ReviewRepository {
         template.update(sql, id, userId, 1);
         Review review = this.getReviewById(id);
         review.setUseful(this.getReviewRate(review.getReviewId()));
-        this.updateWithoutRecord(review);
+        this.update(review);
     }
 
     public void addDisLikeToReview(Integer id, Integer userId) {
         String sql = "insert into reviews_rates(review_id, user_id, useful) values (?, ?, ?)";
         template.update(sql, id, userId, -1);
         Review review = this.getReviewById(id);
-        this.updateWithoutRecord(review);
+        this.update(review);
     }
 
     public void deleteLikeReview(Integer id, Integer userId) {
         String sql = "delete from reviews_rates where review_id = ? and user_id = ? and useful = 1";
         template.update(sql, id, userId);
         Review review = this.getReviewById(id);
-        this.updateWithoutRecord(review);
+        this.update(review);
     }
 
     public void deleteDisLikeFromReview(Integer id, Integer userId) {
         String sql = "delete from reviews_rates where review_id = ? and user_id = ? and useful = -1";
         template.update(sql, id, userId);
         Review review = this.getReviewById(id);
-        this.updateWithoutRecord(review);
+        this.update(review);
     }
 
     private int getReviewRate(int reviewId) {
@@ -182,22 +178,17 @@ public class ReviewRepository {
         return count;
     }
 
+    private Boolean isSameAuthor(Integer reviewId, Integer userId) {
+        return Boolean.TRUE.equals(template.queryForObject(
+                "select exists (select * from reviews where id = ? and user_id = ?) as match",
+                (rs, rowNum) -> rs.getBoolean("match"), reviewId, userId));
+    }
+
     private void throwNotFoundExceptionForNonExistentId(Integer id, String tableName) {
         String select = "select exists (select id from " + tableName + " where id = ?) as match";
         if (Boolean.FALSE.equals(template.queryForObject(select,
                 (rs, rowNum) -> rs.getBoolean("match"), id))) {
             throw new NotFoundException("No " + tableName + " with such ID: " + id);
         }
-    }
-
-    private Review updateWithoutRecord(Review review) {
-        template.update("UPDATE reviews " +
-                        "SET content = ?, is_positive = ? " +
-                        "WHERE id = ?",
-                review.getContent(),
-                review.getIsPositive(),
-                review.getReviewId());
-        log.info("Обновлен отзыв с id {}", review.getReviewId());
-        return getReviewById(review.getReviewId());
     }
 }

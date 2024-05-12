@@ -4,6 +4,6 @@ import ru.yandex.practicum.filmorate.model.Event;
 
 import java.util.List;
 
-public interface FeedService {
-    public List<Event> get(Integer userId);
+public interface EventService {
+    List<Event> get(Integer userId);
 }

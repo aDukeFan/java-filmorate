@@ -79,22 +79,26 @@ public class UserRepository {
     public User addFollow(Integer userId, Integer friendId) {
         throwNotFoundExceptionForNonExistentUserId(userId);
         throwNotFoundExceptionForNonExistentUserId(friendId);
-        template.update(
-                "insert into follows (following_id, followed_id) values(?, ?)",
-                friendId, userId);
-        log.info("subscribe user '{}' to user '{}'", userId, friendId);
-        eventRepository.addEvent(userId, friendId, "FRIEND", "ADD");
+        if (!isUsersAreFriends(userId, friendId)) {
+            template.update(
+                    "insert into follows (following_id, followed_id) values(?, ?)",
+                    friendId, userId);
+            log.info("subscribe user '{}' to user '{}'", userId, friendId);
+            eventRepository.addEvent(userId, friendId, "FRIEND", "ADD");
+        }
         return getById(userId);
     }
 
     public User removeFollowing(Integer userId, Integer friendId) {
         throwNotFoundExceptionForNonExistentUserId(userId);
         throwNotFoundExceptionForNonExistentUserId(friendId);
-        template.update(
-                "delete from follows where following_id = ? and followed_id = ?",
-                friendId, userId);
-        log.info("unsubscribe user '{}' from user '{}'", userId, friendId);
-        eventRepository.addEvent(userId, friendId, "FRIEND", "REMOVE");
+        if (isUsersAreFriends(userId, friendId)) {
+            template.update(
+                    "delete from follows where following_id = ? and followed_id = ?",
+                    friendId, userId);
+            log.info("unsubscribe user '{}' from user '{}'", userId, friendId);
+            eventRepository.addEvent(userId, friendId, "FRIEND", "REMOVE");
+        }
         return getById(userId);
     }
 
@@ -182,6 +186,12 @@ public class UserRepository {
                 .setBirthday(rs.getDate("birthday").toLocalDate());
     }
 
+    private boolean isUsersAreFriends(int userId, int friendId) {
+        return Boolean.TRUE.equals(template.queryForObject(
+                "select exists (select * from follows where following_id = ? and followed_id = ?) as match",
+                (rs, rowNum) -> rs.getBoolean("match"), friendId, userId));
+    }
+
     private void setFollowersIdsFromDateBase(User user) {
         user.getFriends().addAll(template.query(
                 "select following_id from follows where followed_id = ?",
@@ -200,4 +210,5 @@ public class UserRepository {
         template.update("DELETE FROM users WHERE id=?", userId);
         log.info("deleted user by id '{}'", userId);
     }
+
 }

@@ -11,25 +11,25 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Event;
 
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @Slf4j
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @AllArgsConstructor
 public class EventRepository {
 
-    JdbcTemplate template;
+    private JdbcTemplate template;
 
     public List<Event> get(Integer id) {
         throwNotFoundExceptionForNonExistentUserId(id);
-        String sql = "select * from events where user_id = ?";
+
+        String sql = "SELECT * FROM events WHERE user_id = ?";
         SqlRowSet sqlRowSet = template.queryForRowSet(sql, id);
         List<Event> events = new ArrayList<>();
         while (sqlRowSet.next()) {
             Event event = new Event()
-                    .setTimestamp(sqlRowSet.getTimestamp("event_timestamp").toLocalDateTime()
-                            .toInstant(ZoneOffset.UTC).toEpochMilli())
+                    .setTimestamp(sqlRowSet.getTimestamp("event_timestamp").toLocalDateTime().toInstant(ZoneOffset.UTC).toEpochMilli())
                     .setEventType(sqlRowSet.getString("event_type"))
                     .setEventId(sqlRowSet.getInt("event_id"))
                     .setOperation(sqlRowSet.getString("operation"))
@@ -37,7 +37,6 @@ public class EventRepository {
                     .setEntityId(sqlRowSet.getInt("entity_id"));
             events.add(event);
         }
-        events.sort(Comparator.comparing(Event::getEventId));
         return events;
     }
 
@@ -53,4 +52,5 @@ public class EventRepository {
             throw new NotFoundException("No users with such ID: " + id);
         }
     }
+
 }
