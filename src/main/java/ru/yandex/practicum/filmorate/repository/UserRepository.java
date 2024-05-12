@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.Constants;
 import ru.yandex.practicum.filmorate.util.FilmRowMapper;
 
 import java.time.ZoneId;
@@ -21,6 +22,7 @@ public class UserRepository {
 
     private JdbcTemplate template;
     private FilmRowMapper filmRowMapper;
+    private FeedRepository feedRepository;
 
     public User create(User user) {
         if (user.getName().isEmpty()) {
@@ -82,6 +84,7 @@ public class UserRepository {
                 "insert into follows (following_id, followed_id) values(?, ?)",
                 friendId, userId);
         log.info("subscribe user '{}' to user '{}'", userId, friendId);
+        feedRepository.recordAddEvent(userId, Constants.EVENT_TYPE_FRIEND, Constants.ENTITY_USER, Constants.ADD_OPERATION);
         return getById(userId);
     }
 
@@ -92,6 +95,8 @@ public class UserRepository {
                 "delete from follows where following_id = ? and followed_id = ?",
                 friendId, userId);
         log.info("unsubscribe user '{}' from user '{}'", userId, friendId);
+        feedRepository.recordAddEvent(userId, Constants.EVENT_TYPE_FRIEND, Constants.ENTITY_USER,
+                Constants.REMOVE_OPERATION);
         return getById(userId);
     }
 

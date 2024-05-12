@@ -6,12 +6,11 @@ import lombok.Data;
 import lombok.experimental.FieldDefaults;
 
 import java.sql.Timestamp;
-import java.time.Instant;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Data
 @Builder
-public class Feed {
+public class Event {
     Timestamp timeStamp;
     Integer userId;
     String eventType;

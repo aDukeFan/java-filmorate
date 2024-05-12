@@ -1,7 +1,9 @@
 package ru.yandex.practicum.filmorate.service;
 
-import ru.yandex.practicum.filmorate.model.Feed;
+import ru.yandex.practicum.filmorate.model.Event;
+
+import java.util.List;
 
 public interface FeedService {
-    public Feed get(Integer userId);
+    public List<Event> get(Integer userId);
 }

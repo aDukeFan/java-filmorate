@@ -8,10 +8,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.model.Feed;
+import ru.yandex.practicum.filmorate.model.Event;
 
 import java.util.ArrayList;
 import java.util.List;
+
 
 @Component
 @Slf4j
@@ -25,12 +26,12 @@ public class FeedRepository {
         this.template = template;
     }
 
-    public List<Feed> get(Integer id) {
-        String sql = "select * from feed where user_id = ?";
+    public List<Event> get(Integer id) {
+        String sql = "select * from events where user_id = ?";
         SqlRowSet sqlRowSet = template.queryForRowSet(sql, id);
-        List<Feed> feeds = new ArrayList<>();
+        List<Event> events = new ArrayList<>();
         while (sqlRowSet.next()) {
-            Feed feed = Feed.builder()
+            Event event = Event.builder()
                     .timeStamp(sqlRowSet.getTimestamp("timestamp"))
                     .userId(sqlRowSet.getInt("user_id"))
                     .eventType(sqlRowSet.getString("event_name"))
@@ -38,15 +39,14 @@ public class FeedRepository {
                     .eventId(sqlRowSet.getInt("id"))
                     .entityId(sqlRowSet.getInt("entity_id"))
                     .build();
-            feeds.add(feed);
+            events.add(event);
         }
-        return feeds;
+        return events;
     }
 
-    public void recordAddFriend(Integer userId, Integer eventId, Integer entityId, String operation) {
-        throwNotFoundExceptionForNonExistentUserId(userId);
-        String sql = "insert into feed(user_id, event_type, entity_id, operation) values(?,?,?,?)";
-        template.update(sql, userId, eventId, entityId, operation);
+    public void recordAddEvent(Integer userId, String eventType, Integer entityId, String operation) {
+        String sql = "insert into events(user_id, event_type, entity_id, operation) values(?,?,?,?)";
+        template.update(sql, userId, eventType, entityId, operation);
     }
 
     private void throwNotFoundExceptionForNonExistentUserId(int id) {

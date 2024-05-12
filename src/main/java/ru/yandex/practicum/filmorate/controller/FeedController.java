@@ -7,8 +7,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.yandex.practicum.filmorate.model.Feed;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.service.FeedService;
+
+import java.util.List;
 
 @RequestMapping("/users")
 @RestController
@@ -22,7 +24,7 @@ public class FeedController {
         this.feedService = feedService;
     }
 
-    public Feed get(Integer id) {
+    public List<Event> get(Integer id) {
         return feedService.get(id);
     }
 }
