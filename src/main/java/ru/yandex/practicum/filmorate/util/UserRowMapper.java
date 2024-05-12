@@ -3,11 +3,13 @@ package ru.yandex.practicum.filmorate.util;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
+import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+@Component
 public class UserRowMapper {
 
     private final JdbcTemplate template;
@@ -30,13 +32,12 @@ public class UserRowMapper {
 
     public RowMapper<User> userRowMapper() {
         return ((rs, rowNum) ->
-                User.builder()
-                        .id(rs.getInt("id"))
-                        .name(rs.getString("name"))
-                        .email(rs.getString("email"))
-                        .login(rs.getString("login"))
-                        .birthday(rs.getDate("birthday").toLocalDate())
-                        .friends(setFriendsListFromDb(rs.getInt("id")))
-                        .build());
+                new User()
+                        .setId(rs.getInt("id"))
+                        .setName(rs.getString("name"))
+                        .setEmail(rs.getString("email"))
+                        .setLogin(rs.getString("login"))
+                        .setBirthday(rs.getDate("birthday").toLocalDate())
+                        .setFriends(setFriendsListFromDb(rs.getInt("id"))));
     }
 }

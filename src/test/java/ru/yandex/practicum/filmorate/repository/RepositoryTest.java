@@ -51,7 +51,7 @@ class RepositoryTest {
                 .isNotNull()
                 .usingRecursiveComparison()
                 .isEqualTo(film1toUpdate);
-        UserRepository userRepository = new UserRepository(template, null);
+        UserRepository userRepository = new UserRepository(template, null, null);
         List<User> usersBeforeSaved = make3Users(userRepository);
         repository.addLike(1, 1);
         repository.addLike(1, 2);
