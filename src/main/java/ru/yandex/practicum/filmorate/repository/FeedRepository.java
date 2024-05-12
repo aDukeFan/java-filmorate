@@ -9,12 +9,10 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Event;
-import ru.yandex.practicum.filmorate.model.User;
 
-import java.sql.Timestamp;
-import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Component
@@ -27,10 +25,11 @@ public class FeedRepository {
 
     public List<Event> get(Integer id) {
         throwNotFoundExceptionForNonExistentUserId(id);
-        String sql = "SELECT * FROM events WHERE user_id IN (SELECT following_id FROM follows WHERE followed_id = ?)";
-        String sqlNew = "SELECT * FROM events WHERE user_id IN (SELECT followed_id FROM follows WHERE following_id = ?)"; // поменяно местами followed_id following_id от sql
-        String sql1 = "select * from events where user_id = ?";
-        SqlRowSet sqlRowSet = template.queryForRowSet(sqlNew, id);
+        //String sql = "SELECT * FROM events WHERE user_id IN (SELECT following_id FROM follows WHERE followed_id = ?)";
+        //String sqlNew = "SELECT * FROM events WHERE user_id IN (SELECT followed_id FROM follows WHERE following_id = ?)"; // поменяно местами followed_id following_id от sql
+        //String sql1 = "select * from events where user_id = ?";
+        String sql = "SELECT * FROM events WHERE user_id = ? OR user_id IN (select following_id from follows where followed_id = ?)";
+        SqlRowSet sqlRowSet = template.queryForRowSet(sql, id, id);
         List<Event> events = new ArrayList<>();
         while (sqlRowSet.next()) {
             Event event = new Event()
@@ -42,6 +41,7 @@ public class FeedRepository {
                     .setEntityId(sqlRowSet.getInt("entity_id"));
             events.add(event);
         }
+        events.sort(Comparator.comparing(Event::getTimestamp));
         return events;
     }
 

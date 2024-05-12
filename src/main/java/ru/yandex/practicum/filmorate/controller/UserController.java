@@ -13,6 +13,7 @@ import java.util.List;
 @RequestMapping("/users")
 @AllArgsConstructor
 public class UserController {
+
     private UserService userService;
 
     @PostMapping
