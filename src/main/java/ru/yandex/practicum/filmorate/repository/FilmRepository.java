@@ -11,6 +11,7 @@ import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Rating;
+import ru.yandex.practicum.filmorate.util.mappers.FilmRowMapper;
 
 import java.time.ZoneId;
 import java.util.*;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 public class FilmRepository {
 
     private JdbcTemplate template;
+    private FilmRowMapper filmRowMapper;
 
     public Film create(Film film) {
         log.info("На сохранение поступил фильм: id {}, name {}, release {}", film.getId(), film.getName(), film.getReleaseDate());
@@ -144,7 +146,7 @@ public class FilmRepository {
                     (rs, rowNum) -> new Rating()
                             .setName(rs.getString("name"))
                             .setId(rs.getInt("id")), ratingId);
-            film.setMpa(mpa);
+            Objects.requireNonNull(film).setMpa(mpa);
         }
         List<Integer> genresIds = template.query(
                 "select genre_id as id from genres_films where film_id = ?",
@@ -156,7 +158,7 @@ public class FilmRepository {
                     (rs, rowNum) -> new Genre()
                             .setId(rs.getInt("id"))
                             .setName(rs.getString("name")), genreId)));
-            film.getGenres().addAll(genresList);
+            Objects.requireNonNull(film).getGenres().addAll(genresList);
         }
 
         List<Director> filmDirectors = template.query(
@@ -167,7 +169,7 @@ public class FilmRepository {
                 (rs, rowNum) -> new Director()
                         .setId(rs.getInt("id"))
                         .setName(rs.getString("name")), filmId);
-        film.getDirectors().addAll(filmDirectors);
+        Objects.requireNonNull(film).getDirectors().addAll(filmDirectors);
 
         List<Integer> likesList = template.query(
                 "select user_id as id from likes where film_id = ?",
@@ -180,12 +182,17 @@ public class FilmRepository {
     }
 
     public List<Film> findAll() {
-        List<Integer> filmsId = template.query(
-                "select id from films order by id asc",
-                (rs, rowNum) -> rs.getInt("id"));
-        List<Film> films = new ArrayList<>();
-        filmsId.forEach(id -> films.add(getById(id)));
-        return films;
+
+        return template.query(
+                "select * from films order by id asc",
+                filmRowMapper.mapper());
+//
+//        List<Integer> filmsId = template.query(
+//                "select id from films order by id asc",
+//                (rs, rowNum) -> rs.getInt("id"));
+//        List<Film> films = new ArrayList<>();
+//        filmsId.forEach(id -> films.add(getById(id)));
+//        return films;
     }
 
     public Film addLike(Integer filmId, Integer userId) {
@@ -234,7 +241,6 @@ public class FilmRepository {
                     })
                     .collect(Collectors.toList());
         }
-
         return top;
     }
 

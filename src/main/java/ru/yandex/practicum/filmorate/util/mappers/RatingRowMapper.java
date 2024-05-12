@@ -1,0 +1,15 @@
+package ru.yandex.practicum.filmorate.util.mappers;
+
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.model.Rating;
+
+@Component
+public class RatingRowMapper {
+
+    public RowMapper<Rating> mapper() {
+        return (rs, rowNum) -> new Rating()
+                .setId(rs.getInt("id"))
+                .setName(rs.getString("name"));
+    }
+}

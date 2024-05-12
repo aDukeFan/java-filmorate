@@ -29,7 +29,7 @@ class FilmFeaturesRepositoriesTest {
 
     @Test
     void getRatingById() {
-        RatingRepository repository = new RatingRepository(template);
+        RatingRepository repository = new RatingRepository(template, null);
         Rating rating = new Rating().setId(6).setName("XYZ");
         repository.create(rating);
         Rating savedRating = repository.getById(6);
