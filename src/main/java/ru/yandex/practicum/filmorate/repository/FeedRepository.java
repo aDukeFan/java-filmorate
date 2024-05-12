@@ -9,7 +9,11 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Event;
+import ru.yandex.practicum.filmorate.model.User;
 
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,14 +27,14 @@ public class FeedRepository {
 
     public List<Event> get(Integer id) {
         throwNotFoundExceptionForNonExistentUserId(id);
-        SqlRowSet sqlRowSet = template.queryForRowSet("SELECT * FROM events " +
-                "WHERE user_id IN " +
-                "(SELECT following_id FROM follows " +
-                "WHERE followed_id = ?)", id);
+        String sql = "SELECT * FROM events WHERE user_id IN (SELECT following_id FROM follows WHERE followed_id = ?)";
+        String sqlNew = "SELECT * FROM events WHERE user_id IN (SELECT followed_id FROM follows WHERE following_id = ?)"; // поменяно местами followed_id following_id от sql
+        String sql1 = "select * from events where user_id = ?";
+        SqlRowSet sqlRowSet = template.queryForRowSet(sqlNew, id);
         List<Event> events = new ArrayList<>();
         while (sqlRowSet.next()) {
             Event event = new Event()
-                    .setTimeStamp(sqlRowSet.getTimestamp("event_timestamp"))
+                    .setTimestamp(sqlRowSet.getTimestamp("event_timestamp").toLocalDateTime().toInstant(ZoneOffset.UTC).toEpochMilli())
                     .setEventType(sqlRowSet.getString("event_type"))
                     .setEventId(sqlRowSet.getInt("event_id"))
                     .setOperation(sqlRowSet.getString("operation"))
@@ -42,7 +46,9 @@ public class FeedRepository {
     }
 
     public void recordAddEvent(Integer userId, String eventType, Integer entityId, String operation) {
-        String sql = "insert into events (user_id, event_type, entity_id, operation) values(?,?,?,?)";
+
+        String sql = "insert into events(user_id, event_type, entity_id, operation, event_timestamp) " +
+                "values(?,?,?,?,CURRENT_TIMESTAMP)";
         template.update(sql, userId, eventType, entityId, operation);
     }
 

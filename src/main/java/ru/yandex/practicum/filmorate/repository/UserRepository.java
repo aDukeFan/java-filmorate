@@ -84,7 +84,7 @@ public class UserRepository {
                 "insert into follows (following_id, followed_id) values(?, ?)",
                 friendId, userId);
         log.info("subscribe user '{}' to user '{}'", userId, friendId);
-        feedRepository.recordAddEvent(userId, Constants.EVENT_TYPE_FRIEND, Constants.ENTITY_USER, Constants.ADD_OPERATION);
+        this.makeRecordOnAdd(userId, friendId);
         return getById(userId);
     }
 
@@ -95,8 +95,7 @@ public class UserRepository {
                 "delete from follows where following_id = ? and followed_id = ?",
                 friendId, userId);
         log.info("unsubscribe user '{}' from user '{}'", userId, friendId);
-        feedRepository.recordAddEvent(userId, Constants.EVENT_TYPE_FRIEND, Constants.ENTITY_USER,
-                Constants.REMOVE_OPERATION);
+        this.makeRecordOnRemove(userId, friendId);
         return getById(userId);
     }
 
@@ -201,5 +200,13 @@ public class UserRepository {
     public void delUserById(int userId) {
         template.update("DELETE FROM users WHERE id=?", userId);
         log.info("deleted user by id '{}'", userId);
+    }
+
+    private void makeRecordOnAdd(Integer userId, Integer friendId) {
+        feedRepository.recordAddEvent(userId,Constants.EVENT_TYPE_FRIEND, friendId, Constants.ADD_OPERATION);
+    }
+
+    private void makeRecordOnRemove(Integer userId, Integer friendId) {
+        feedRepository.recordAddEvent(userId,Constants.EVENT_TYPE_FRIEND, friendId, Constants.REMOVE_OPERATION);
     }
 }

@@ -9,7 +9,4 @@ public class Constants {
     public static final String EVENT_TYPE_LIKE = "LIKE";
     public static final String EVENT_TYPE_REVIEW = "REVIEW";
     public static final String EVENT_TYPE_FRIEND = "FRIEND";
-
-    public static final int ENTITY_USER = 1;
-    public static final int ENTITY_FILM = 2;
 }
