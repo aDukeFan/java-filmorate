@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.repository.FeedRepository;
-import ru.yandex.practicum.filmorate.repository.UserRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,21 +18,15 @@ import java.util.List;
 public class FeedServiceImpl implements FeedService{
 
     FeedRepository repository;
-    UserRepository userRepository;
 
     @Autowired
-    public FeedServiceImpl(FeedRepository repository, UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public FeedServiceImpl(FeedRepository repository) {
         this.repository = repository;
     }
 
     @Override
     public List<Event> get(Integer userId) {
-        List<Event> events = new ArrayList<>();
-        List<User> friends = userRepository.getFollowers(userId);
-        for (User user1 : friends) {
-            events.addAll(repository.get(user1.getId()));
-        }
+        List<Event> events = repository.getAllEvents();
         return repository.get(userId);
     }
 }

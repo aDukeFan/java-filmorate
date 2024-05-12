@@ -11,9 +11,7 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Event;
 
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 @Component
 @Slf4j
@@ -27,13 +25,15 @@ public class FeedRepository {
         throwNotFoundExceptionForNonExistentUserId(id);
         //String sql = "SELECT * FROM events WHERE user_id IN (SELECT following_id FROM follows WHERE followed_id = ?)";
         //String sqlNew = "SELECT * FROM events WHERE user_id IN (SELECT followed_id FROM follows WHERE following_id = ?)"; // поменяно местами followed_id following_id от sql
-        //String sql1 = "select * from events where user_id = ?";
+        String sql1 = "select * from events where user_id = ?";
         String sql = "SELECT * FROM events WHERE user_id = ? OR user_id IN (select following_id from follows where followed_id = ?)";
-        SqlRowSet sqlRowSet = template.queryForRowSet(sql, id, id);
+        String sqlNew = "select * from events where user_id IN (select following_id from follows where followed_id = ?)";
+        SqlRowSet sqlRowSet = template.queryForRowSet(sql1, id);
         List<Event> events = new ArrayList<>();
         while (sqlRowSet.next()) {
             Event event = new Event()
-                    .setTimestamp(sqlRowSet.getTimestamp("event_timestamp").toLocalDateTime().toInstant(ZoneOffset.UTC).toEpochMilli())
+                    .setTimestamp(sqlRowSet.getTimestamp("event_timestamp").toLocalDateTime()
+                            .toInstant(ZoneOffset.UTC).toEpochMilli())
                     .setEventType(sqlRowSet.getString("event_type"))
                     .setEventId(sqlRowSet.getInt("event_id"))
                     .setOperation(sqlRowSet.getString("operation"))
@@ -41,7 +41,7 @@ public class FeedRepository {
                     .setEntityId(sqlRowSet.getInt("entity_id"));
             events.add(event);
         }
-        events.sort(Comparator.comparing(Event::getTimestamp));
+        events.sort(Comparator.comparing(Event::getEventId));
         return events;
     }
 
@@ -58,6 +58,24 @@ public class FeedRepository {
                 (rs, rowNum) -> rs.getBoolean("match"), id))) {
             throw new NotFoundException("No users with such ID: " + id);
         }
+    }
+
+    public List<Event> getAllEvents() {
+        List<Event> events = new ArrayList<>();
+        String sql = "select * from events";
+        SqlRowSet sqlRowSet = template.queryForRowSet(sql);
+            while (sqlRowSet.next()) {
+                Event event = new Event()
+                        .setTimestamp(sqlRowSet.getTimestamp("event_timestamp").toLocalDateTime()
+                                .toInstant(ZoneOffset.UTC).toEpochMilli())
+                        .setEventType(sqlRowSet.getString("event_type"))
+                        .setEventId(sqlRowSet.getInt("event_id"))
+                        .setOperation(sqlRowSet.getString("operation"))
+                        .setUserId(sqlRowSet.getInt("user_id"))
+                        .setEntityId(sqlRowSet.getInt("entity_id"));
+                events.add(event);
+        }
+        return events;
     }
 
 }

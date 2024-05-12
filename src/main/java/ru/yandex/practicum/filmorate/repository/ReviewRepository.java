@@ -53,7 +53,8 @@ public class ReviewRepository {
                 review.getIsPositive(),
                 review.getReviewId());
         log.info("Обновлен отзыв с id {}", review.getReviewId());
-        this.makeRecordOnUpdate(review.getUserId(), review.getReviewId());
+        Review review1 = this.getReviewById(review.getReviewId());
+        this.makeRecordOnUpdate(review1.getUserId(), review1.getReviewId());
         return getReviewById(review.getReviewId());
     }
 
@@ -146,28 +147,28 @@ public class ReviewRepository {
         template.update(sql, id, userId, 1);
         Review review = this.getReviewById(id);
         review.setUseful(this.getReviewRate(review.getReviewId()));
-        this.update(review);
+        this.updateWithoutRecord(review);
     }
 
     public void addDisLikeToReview(Integer id, Integer userId) {
         String sql = "insert into reviews_rates(review_id, user_id, useful) values (?, ?, ?)";
         template.update(sql, id, userId, -1);
         Review review = this.getReviewById(id);
-        this.update(review);
+        this.updateWithoutRecord(review);
     }
 
     public void deleteLikeReview(Integer id, Integer userId) {
         String sql = "delete from reviews_rates where review_id = ? and user_id = ? and useful = 1";
         template.update(sql, id, userId);
         Review review = this.getReviewById(id);
-        this.update(review);
+        this.updateWithoutRecord(review);
     }
 
     public void deleteDisLikeFromReview(Integer id, Integer userId) {
         String sql = "delete from reviews_rates where review_id = ? and user_id = ? and useful = -1";
         template.update(sql, id, userId);
         Review review = this.getReviewById(id);
-        this.update(review);
+        this.updateWithoutRecord(review);
     }
 
     private int getReviewRate(int reviewId) {
@@ -198,5 +199,16 @@ public class ReviewRepository {
 
     private void makeRecordOnUpdate(Integer userId, Integer reviewId) {
         feedRepository.recordAddEvent(userId,Constants.EVENT_TYPE_REVIEW, reviewId, Constants.UPDATE_OPERATION);
+    }
+
+    private Review updateWithoutRecord(Review review) {
+        template.update("UPDATE reviews " +
+                        "SET content = ?, is_positive = ? " +
+                        "WHERE id = ?",
+                review.getContent(),
+                review.getIsPositive(),
+                review.getReviewId());
+        log.info("Обновлен отзыв с id {}", review.getReviewId());
+        return getReviewById(review.getReviewId());
     }
 }
