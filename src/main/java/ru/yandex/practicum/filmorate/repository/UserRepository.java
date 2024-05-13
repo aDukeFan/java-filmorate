@@ -208,6 +208,7 @@ public class UserRepository {
     }
 
     public void delUserById(int userId) {
+        throwNotFoundExceptionForNonExistentUserId(userId);
         template.update("DELETE FROM users WHERE id=?", userId);
         log.info("deleted user by id '{}'", userId);
     }
