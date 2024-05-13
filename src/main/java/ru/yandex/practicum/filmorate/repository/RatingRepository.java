@@ -37,30 +37,24 @@ public class RatingRepository {
         throwNotFoundExceptionForNonExistentId(rating.getId());
         template.update(
                 "update ratings set name = ? where id = ?",
-                rating.getName(),
-                rating.getId());
+                rating.getName(), rating.getId());
         return rating;
     }
 
     public Rating getById(int ratingId) {
         throwNotFoundExceptionForNonExistentId(ratingId);
         return template.queryForObject(
-                "select * from ratings where id = ?",
-                ratingRowMapper.mapper(),
+                "select * from ratings where id = ?", ratingRowMapper.mapper(),
                 ratingId);
     }
 
     public List<Rating> getAll() {
-        return template.query(
-                "select * from ratings order by id",
-                ratingRowMapper.mapper());
+        return template.query("select * from ratings order by id", ratingRowMapper.mapper());
     }
 
     public void removeById(int ratingId) {
         throwNotFoundExceptionForNonExistentId(ratingId);
-        template.update(
-                "delete from ratings where id = ?",
-                ratingId);
+        template.update("delete from ratings where id = ?", ratingId);
 
     }
 

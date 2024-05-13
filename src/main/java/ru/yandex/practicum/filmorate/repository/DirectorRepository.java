@@ -48,15 +48,12 @@ public class DirectorRepository {
     public Director getById(Integer id) {
         throwNotFoundExceptionForNonExistentId(id);
         return template.queryForObject(
-                "select * from directors where id = ?",
-                directorRowMapper.mapper(),
+                "select * from directors where id = ?", directorRowMapper.mapper(),
                 id);
     }
 
     public List<Director> getAll() {
-        return template.query(
-                "select * from directors order by id asc",
-                directorRowMapper.mapper());
+        return template.query("select * from directors order by id asc", directorRowMapper.mapper());
     }
 
     public void removeById(Integer id) {

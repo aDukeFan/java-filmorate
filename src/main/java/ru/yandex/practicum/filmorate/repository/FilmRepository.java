@@ -182,17 +182,7 @@ public class FilmRepository {
     }
 
     public List<Film> findAll() {
-
-        return template.query(
-                "select * from films order by id asc",
-                filmRowMapper.mapper());
-//
-//        List<Integer> filmsId = template.query(
-//                "select id from films order by id asc",
-//                (rs, rowNum) -> rs.getInt("id"));
-//        List<Film> films = new ArrayList<>();
-//        filmsId.forEach(id -> films.add(getById(id)));
-//        return films;
+        return template.query("select * from films order by id asc", filmRowMapper.mapper());
     }
 
     public Film addLike(Integer filmId, Integer userId) {

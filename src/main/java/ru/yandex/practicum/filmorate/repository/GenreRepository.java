@@ -43,22 +43,17 @@ public class GenreRepository {
     public Genre getById(int genreId) {
         throwNotFoundExceptionForNonExistentId(genreId);
         return template.queryForObject(
-                "select * from genres where id = ?",
-                genreRowMapper.mapper(),
+                "select * from genres where id = ?", genreRowMapper.mapper(),
                 genreId);
     }
 
     public List<Genre> getAll() {
-        return template.query(
-                "select * from genres order by id asc",
-                genreRowMapper.mapper());
+        return template.query("select * from genres order by id asc", genreRowMapper.mapper());
     }
 
     public void removeById(int genreId) {
         throwNotFoundExceptionForNonExistentId(genreId);
-        template.update(
-                "delete from genres where id = ?",
-                genreId);
+        template.update("delete from genres where id = ?", genreId);
     }
 
 
