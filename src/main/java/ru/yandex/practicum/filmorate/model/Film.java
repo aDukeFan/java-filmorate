@@ -1,9 +1,11 @@
 package ru.yandex.practicum.filmorate.model;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
+import lombok.experimental.FieldDefaults;
 import ru.yandex.practicum.filmorate.util.ReleaseDate;
 
 import javax.validation.constraints.NotEmpty;
@@ -19,22 +21,23 @@ import java.util.Set;
 @Setter
 @ToString
 @Accessors(chain = true)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class Film {
-    private Integer id;
+    Integer id;
     @NotEmpty(message = "Name must be set")
     @NotNull(message = "Must have a name")
-    private String name;
+    String name;
     @ReleaseDate(message = "The date of release must be after 28 December 1895")
-    private LocalDate releaseDate;
+    LocalDate releaseDate;
     @Size(max = 200, message = "Description is too long (max 200 chars).")
-    private String description;
+    String description;
     @Positive(message = "Duration must be positive.")
-    private int duration;
-    private int rate;
-    private Rating mpa;
-    private Set<Director> directors = new HashSet<>();
-    private Set<Genre> genres = new LinkedHashSet<>();
-    private Set<Integer> likes = new LinkedHashSet<>();
+    int duration;
+    int rate;
+    Rating mpa;
+    Set<Director> directors = new HashSet<>();
+    Set<Genre> genres = new LinkedHashSet<>();
+    Set<Integer> likes = new LinkedHashSet<>();
 
 
     public static Film.Builder builder() {

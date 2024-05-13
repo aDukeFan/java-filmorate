@@ -18,8 +18,6 @@ import java.util.stream.Collectors;
 public class ReviewRepository {
 
     private JdbcTemplate template;
-    private EventRepository eventRepository;
-
 
     public Review create(Review review) {
         log.info("на сохранение получен отзыв с userId: {} filmId: {}",
@@ -37,27 +35,21 @@ public class ReviewRepository {
         Integer reviewId = template.queryForObject(sqlForGettingId, Integer.class);
         review.setReviewId(reviewId);
         log.info("Создан отзыв с id {}", review.getReviewId());
-        eventRepository.addEvent(review.getUserId(), review.getReviewId(), "REVIEW", "ADD");
+        addEvent(review.getUserId(), "REVIEW", review.getReviewId(), "ADD");
         return review;
     }
 
     public Review update(Review review) {
-        throwNotFoundExceptionForNonExistentId(review.getReviewId(), "reviews");
-        throwNotFoundExceptionForNonExistentId(review.getUserId(), "users");
-        if (isSameAuthorAndFilm(review.getReviewId(), review.getUserId(), review.getFilmId())) {
-            template.update("UPDATE reviews " +
-                            "SET content = ?, is_positive = ? " +
-                            "WHERE id = ?",
-                    review.getContent(),
-                    review.getIsPositive(),
-                    review.getReviewId());
-            log.info("Обновлен отзыв с id {}", review.getReviewId());
-            eventRepository.addEvent(review.getUserId(), review.getReviewId(), "REVIEW", "UPDATE");
-        } else {
-            log.info("нет ревью c id {} с автором {} на фильм {}",
-                    review.getReviewId(), review.getUserId(), review.getFilmId());
-        }
-        return getReviewById(review.getReviewId());
+        template.update("UPDATE reviews " +
+                        "SET content = ?, is_positive = ? " +
+                        "WHERE id = ?",
+                review.getContent(),
+                review.getIsPositive(),
+                review.getReviewId());
+        log.info("Обновлен отзыв с id {}", review.getReviewId());
+        Review reviewAfterUpdate = this.getReviewById(review.getReviewId());
+        addEvent(reviewAfterUpdate.getUserId(), "REVIEW", reviewAfterUpdate.getReviewId(), "UPDATE");
+        return reviewAfterUpdate;
     }
 
     public void delete(Integer id) {
@@ -65,7 +57,7 @@ public class ReviewRepository {
         String sql = "delete from reviews where id = ?";
         template.update(sql, id);
         log.info("Удален отзыв с id {}", id);
-        eventRepository.addEvent(review.getUserId(), review.getReviewId(), "REVIEW", "REMOVE");
+        addEvent(review.getUserId(), "REVIEW", review.getReviewId(), "REMOVE");
     }
 
     public Review getReviewById(Integer id) {
@@ -145,32 +137,23 @@ public class ReviewRepository {
     }
 
     public void addLikeReview(Integer id, Integer userId) {
-        String sql = "insert into reviews_rates (review_id, user_id, useful) values (?, ?, ?)";
+        String sql = "INSERT INTO reviews_rates (review_id, user_id, useful) VALUES (?, ?, ?)";
         template.update(sql, id, userId, 1);
-        Review review = this.getReviewById(id);
-        review.setUseful(this.getReviewRate(review.getReviewId()));
-        this.update(review);
     }
 
     public void addDisLikeToReview(Integer id, Integer userId) {
-        String sql = "insert into reviews_rates(review_id, user_id, useful) values (?, ?, ?)";
+        String sql = "INSERT INTO reviews_rates(review_id, user_id, useful) VALUES (?, ?, ?)";
         template.update(sql, id, userId, -1);
-        Review review = this.getReviewById(id);
-        this.update(review);
     }
 
     public void deleteLikeReview(Integer id, Integer userId) {
         String sql = "delete from reviews_rates where review_id = ? and user_id = ? and useful = 1";
         template.update(sql, id, userId);
-        Review review = this.getReviewById(id);
-        this.update(review);
     }
 
     public void deleteDisLikeFromReview(Integer id, Integer userId) {
         String sql = "delete from reviews_rates where review_id = ? and user_id = ? and useful = -1";
         template.update(sql, id, userId);
-        Review review = this.getReviewById(id);
-        this.update(review);
     }
 
     private int getReviewRate(int reviewId) {
@@ -183,17 +166,18 @@ public class ReviewRepository {
         return count;
     }
 
-    private Boolean isSameAuthorAndFilm(Integer reviewId, Integer userId, Integer filmId) {
-        return Boolean.TRUE.equals(template.queryForObject(
-                "select exists (select * from reviews where id = ? and user_id = ? and film_id = ?) as match",
-                (rs, rowNum) -> rs.getBoolean("match"), reviewId, userId, filmId));
-    }
-
     private void throwNotFoundExceptionForNonExistentId(Integer id, String tableName) {
         String select = "select exists (select id from " + tableName + " where id = ?) as match";
         if (Boolean.FALSE.equals(template.queryForObject(select,
                 (rs, rowNum) -> rs.getBoolean("match"), id))) {
             throw new NotFoundException("No " + tableName + " with such ID: " + id);
         }
+    }
+
+    private void addEvent(Integer userId, String eventType, Integer entityId, String operation) {
+        template.update("INSERT INTO events " +
+                        "(user_id, event_type, entity_id, operation, event_timestamp) " +
+                        "VALUES(?,?,?,?,CURRENT_TIMESTAMP)",
+                userId, eventType, entityId, operation);
     }
 }

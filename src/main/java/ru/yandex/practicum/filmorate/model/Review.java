@@ -5,7 +5,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
-import lombok.extern.slf4j.Slf4j;
 
 import javax.validation.constraints.NotNull;
 
@@ -13,17 +12,16 @@ import javax.validation.constraints.NotNull;
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
-@Slf4j
 public class Review {
-    private Integer reviewId;
+    Integer reviewId;
     @NotNull
-    private String content;
+    String content;
     @NotNull
-    private Boolean isPositive;
+    Boolean isPositive;
     @NotNull
-    private Integer userId;
+    Integer userId;
     @NotNull
-    private Integer filmId;
-    private int useful = 0;
+    Integer filmId;
+    int useful = 0;
 
 }
