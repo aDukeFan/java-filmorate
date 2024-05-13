@@ -40,24 +40,33 @@ public class ReviewRepository {
     }
 
     public Review update(Review review) {
-        template.update("UPDATE reviews " +
-                        "SET content = ?, is_positive = ? " +
-                        "WHERE id = ?",
-                review.getContent(),
-                review.getIsPositive(),
-                review.getReviewId());
-        log.info("Обновлен отзыв с id {}", review.getReviewId());
-        Review reviewAfterUpdate = this.getReviewById(review.getReviewId());
-        addEvent(reviewAfterUpdate.getUserId(), "REVIEW", reviewAfterUpdate.getReviewId(), "UPDATE");
-        return reviewAfterUpdate;
+        Integer id = review.getReviewId();
+        if (isReviewExisted(id)) {
+            Integer authorId = template.queryForObject(
+                    "select user_id from reviews where id = ?",
+                    Integer.class, id);
+            template.update("UPDATE reviews " +
+                            "SET content = ?, is_positive = ? " +
+                            "WHERE id = ?",
+                    review.getContent(),
+                    review.getIsPositive(),
+                    review.getReviewId());
+            log.info("Обновлен отзыв с id {}", review.getReviewId());
+            addEvent(authorId, "REVIEW", id, "UPDATE");
+        }
+        return getReviewById(review.getReviewId());
     }
 
     public void delete(Integer id) {
-        Review review = this.getReviewById(id);
-        String sql = "delete from reviews where id = ?";
-        template.update(sql, id);
-        log.info("Удален отзыв с id {}", id);
-        addEvent(review.getUserId(), "REVIEW", review.getReviewId(), "REMOVE");
+        if (isReviewExisted(id)) {
+            Integer authorId = template.queryForObject(
+                    "select user_id from reviews where id = ?",
+                    Integer.class, id);
+            String sql = "delete from reviews where id = ?";
+            template.update(sql, id);
+            log.info("Удален отзыв с id {}", id);
+            addEvent(authorId, "REVIEW", id, "REMOVE");
+        }
     }
 
     public Review getReviewById(Integer id) {
@@ -179,5 +188,12 @@ public class ReviewRepository {
                         "(user_id, event_type, entity_id, operation, event_timestamp) " +
                         "VALUES(?,?,?,?,CURRENT_TIMESTAMP)",
                 userId, eventType, entityId, operation);
+    }
+
+    private Boolean isReviewExisted(Integer id) {
+        String select = "select exists (select id from reviews where id = ?) as match";
+        return Boolean.TRUE.equals(template.queryForObject(select,
+                (rs, rowNum) -> rs.getBoolean("match"), id));
+
     }
 }

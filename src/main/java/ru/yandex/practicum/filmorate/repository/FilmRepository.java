@@ -191,22 +191,18 @@ public class FilmRepository {
     public Film addLike(Integer filmId, Integer userId) {
         throwNotFoundExceptionForNonExistentId(filmId, "films");
         throwNotFoundExceptionForNonExistentId(userId, "users");
-        if (!isFilmLikedByUser(filmId, userId)) {
-            template.update("insert into likes (film_id, user_id) values(?, ?)", filmId, userId);
-            log.info("add user's '{}' like to film with '{}'", userId, filmId);
-            addEvent(userId, "LIKE", filmId, "ADD");
-        }
+        template.update("insert into likes (film_id, user_id) values(?, ?)", filmId, userId);
+        log.info("add user's '{}' like to film with '{}'", userId, filmId);
+        addEvent(userId, "LIKE", filmId, "ADD");
         return getById(filmId);
     }
 
     public Film removeLike(Integer filmId, Integer userId) {
         throwNotFoundExceptionForNonExistentId(filmId, "films");
         throwNotFoundExceptionForNonExistentId(userId, "users");
-        if (isFilmLikedByUser(filmId, userId)) {
-            template.update("delete from likes where film_id = ? and user_id = ?", filmId, userId);
-            log.info("remove user's '{}' like from film '{}'", userId, filmId);
-            addEvent(userId, "LIKE", filmId, "REMOVE");
-        }
+        template.update("delete from likes where film_id = ? and user_id = ?", filmId, userId);
+        log.info("remove user's '{}' like from film '{}'", userId, filmId);
+        addEvent(userId, "LIKE", filmId, "REMOVE");
 
         return getById(filmId);
     }
@@ -310,12 +306,6 @@ public class FilmRepository {
         return filmIds.stream()
                 .map(this::getById)
                 .collect(Collectors.toList());
-    }
-
-    private boolean isFilmLikedByUser(int filmId, int userId) {
-        return Boolean.TRUE.equals(template.queryForObject(
-                "select exists (select * from likes where film_id = ? and user_id = ?) as match",
-                (rs, rowNum) -> rs.getBoolean("match"), filmId, userId));
     }
 
     private boolean isSetFilmRating(Integer id) {
