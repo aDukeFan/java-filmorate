@@ -9,7 +9,6 @@ import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
-import ru.yandex.practicum.filmorate.storage.Constants;
 
 import java.util.Comparator;
 import java.util.List;
@@ -22,7 +21,7 @@ import java.util.stream.Collectors;
 public class ReviewRepository {
 
     private JdbcTemplate template;
-    private FeedRepository feedRepository;
+    private EventRepository eventRepository;
 
 
     public Review create(Review review) {
@@ -41,11 +40,12 @@ public class ReviewRepository {
         Integer reviewId = template.queryForObject(sqlForGettingId, Integer.class);
         review.setReviewId(reviewId);
         log.info("Создан отзыв с id {}", review.getReviewId());
-        this.makeRecordOnAdd(review.getUserId(), review.getReviewId());
+        eventRepository.addEvent(review.getUserId(), review.getReviewId(), "REVIEW", "ADD");
         return review;
     }
 
     public Review update(Review review) {
+        this.throwNotFoundExceptionForNonExistentId(review.getReviewId(), "reviews");
         template.update("UPDATE reviews " +
                         "SET content = ?, is_positive = ? " +
                         "WHERE id = ?",
@@ -54,7 +54,7 @@ public class ReviewRepository {
                 review.getReviewId());
         log.info("Обновлен отзыв с id {}", review.getReviewId());
         Review review1 = this.getReviewById(review.getReviewId());
-        this.makeRecordOnUpdate(review1.getUserId(), review1.getReviewId());
+        eventRepository.addEvent(review1.getUserId(), review1.getReviewId(), "REVIEW", "UPDATE");
         return getReviewById(review.getReviewId());
     }
 
@@ -63,7 +63,8 @@ public class ReviewRepository {
         String sql = "delete from reviews where id = ?";
         template.update(sql, id);
         log.info("Удален отзыв с id {}", id);
-        this.makeRecordOnRemove(review.getUserId(), review.getReviewId());
+        eventRepository.addEvent(review.getUserId(), review.getReviewId(), "REVIEW", "REMOVE");
+
     }
 
     public Review getReviewById(Integer id) {
@@ -187,18 +188,6 @@ public class ReviewRepository {
                 (rs, rowNum) -> rs.getBoolean("match"), id))) {
             throw new NotFoundException("No " + tableName + " with such ID: " + id);
         }
-    }
-
-    private void makeRecordOnAdd(Integer userId, Integer reviewId) {
-        feedRepository.recordAddEvent(userId, Constants.EVENT_TYPE_REVIEW, reviewId, Constants.ADD_OPERATION);
-    }
-
-    private void makeRecordOnRemove(Integer userId, Integer reviewId) {
-        feedRepository.recordAddEvent(userId,Constants.EVENT_TYPE_REVIEW, reviewId, Constants.REMOVE_OPERATION);
-    }
-
-    private void makeRecordOnUpdate(Integer userId, Integer reviewId) {
-        feedRepository.recordAddEvent(userId,Constants.EVENT_TYPE_REVIEW, reviewId, Constants.UPDATE_OPERATION);
     }
 
     private Review updateWithoutRecord(Review review) {

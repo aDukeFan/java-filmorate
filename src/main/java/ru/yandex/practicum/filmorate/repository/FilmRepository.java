@@ -11,7 +11,6 @@ import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Rating;
-import ru.yandex.practicum.filmorate.storage.Constants;
 
 import java.time.ZoneId;
 import java.util.*;
@@ -23,7 +22,7 @@ import java.util.stream.Collectors;
 public class FilmRepository {
 
     private JdbcTemplate template;
-    private FeedRepository feedRepository;
+    private EventRepository eventRepository;
 
     public Film create(Film film) {
         log.info("На сохранение поступил фильм: id {}, name {}, release {}", film.getId(), film.getName(), film.getReleaseDate());
@@ -198,7 +197,7 @@ public class FilmRepository {
         }
         template.update("insert into likes (film_id, user_id) values(?, ?)", filmId, userId);
         log.info("add user's '{}' like to film with '{}'", userId, filmId);
-        this.makeRecordOnAdd(userId, filmId);
+        eventRepository.addEvent(userId, filmId, "LIKE", "ADD");
         return getById(filmId);
     }
 
@@ -210,7 +209,7 @@ public class FilmRepository {
         }
         template.update("delete from likes where film_id = ? and user_id = ?", filmId, userId);
         log.info("remove user's '{}' like from film '{}'", userId, filmId);
-        this.makeRecordOnRemove(userId, filmId);
+        eventRepository.addEvent(userId, filmId, "LIKE", "REMOVE");
         return getById(filmId);
     }
 
@@ -355,13 +354,5 @@ public class FilmRepository {
     public void delFilmById(int filmId) {
         template.update("DELETE FROM public.films WHERE id=?", filmId);
         log.info("deleted film by id '{}'", filmId);
-    }
-
-    private void makeRecordOnAdd(Integer userId, Integer filmId) {
-        feedRepository.recordAddEvent(userId, Constants.EVENT_TYPE_LIKE, filmId, Constants.ADD_OPERATION);
-    }
-
-    private void makeRecordOnRemove(Integer userId, Integer filmId) {
-        feedRepository.recordAddEvent(userId,Constants.EVENT_TYPE_LIKE, filmId, Constants.REMOVE_OPERATION);
     }
 }

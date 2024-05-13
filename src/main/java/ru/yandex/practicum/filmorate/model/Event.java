@@ -5,10 +5,6 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import lombok.experimental.FieldDefaults;
 
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDate;
-
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Data
 @Accessors(chain = true)

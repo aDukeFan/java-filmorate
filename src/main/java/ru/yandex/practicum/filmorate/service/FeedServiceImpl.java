@@ -6,10 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Event;
-import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.repository.FeedRepository;
+import ru.yandex.practicum.filmorate.repository.EventRepository;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -17,10 +15,10 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class FeedServiceImpl implements FeedService{
 
-    FeedRepository repository;
+    EventRepository repository;
 
     @Autowired
-    public FeedServiceImpl(FeedRepository repository) {
+    public FeedServiceImpl(EventRepository repository) {
         this.repository = repository;
     }
 
