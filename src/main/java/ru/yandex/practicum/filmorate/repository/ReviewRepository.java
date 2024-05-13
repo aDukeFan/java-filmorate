@@ -1,8 +1,6 @@
 package ru.yandex.practicum.filmorate.repository;
 
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -15,7 +13,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
-@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @Component
 @AllArgsConstructor
 public class ReviewRepository {
@@ -38,6 +35,7 @@ public class ReviewRepository {
         Integer reviewId = template.queryForObject(sqlForGettingId, Integer.class);
         review.setReviewId(reviewId);
         log.info("Создан отзыв с id {}", review.getReviewId());
+        addEvent(review.getUserId(), "REVIEW", review.getReviewId(), "ADD");
         return review;
     }
 
@@ -49,13 +47,17 @@ public class ReviewRepository {
                 review.getIsPositive(),
                 review.getReviewId());
         log.info("Обновлен отзыв с id {}", review.getReviewId());
-        return getReviewById(review.getReviewId());
+        Review reviewAfterUpdate = this.getReviewById(review.getReviewId());
+        addEvent(reviewAfterUpdate.getUserId(), "REVIEW", reviewAfterUpdate.getReviewId(), "UPDATE");
+        return reviewAfterUpdate;
     }
 
     public void delete(Integer id) {
+        Review review = this.getReviewById(id);
         String sql = "delete from reviews where id = ?";
         template.update(sql, id);
         log.info("Удален отзыв с id {}", id);
+        addEvent(review.getUserId(), "REVIEW", review.getReviewId(), "REMOVE");
     }
 
     public Review getReviewById(Integer id) {
@@ -135,32 +137,23 @@ public class ReviewRepository {
     }
 
     public void addLikeReview(Integer id, Integer userId) {
-        String sql = "insert into reviews_rates (review_id, user_id, useful) values (?, ?, ?)";
+        String sql = "INSERT INTO reviews_rates (review_id, user_id, useful) VALUES (?, ?, ?)";
         template.update(sql, id, userId, 1);
-        Review review = this.getReviewById(id);
-        review.setUseful(this.getReviewRate(review.getReviewId()));
-        this.update(review);
     }
 
     public void addDisLikeToReview(Integer id, Integer userId) {
-        String sql = "insert into reviews_rates(review_id, user_id, useful) values (?, ?, ?)";
+        String sql = "INSERT INTO reviews_rates(review_id, user_id, useful) VALUES (?, ?, ?)";
         template.update(sql, id, userId, -1);
-        Review review = this.getReviewById(id);
-        this.update(review);
     }
 
     public void deleteLikeReview(Integer id, Integer userId) {
         String sql = "delete from reviews_rates where review_id = ? and user_id = ? and useful = 1";
         template.update(sql, id, userId);
-        Review review = this.getReviewById(id);
-        this.update(review);
     }
 
     public void deleteDisLikeFromReview(Integer id, Integer userId) {
         String sql = "delete from reviews_rates where review_id = ? and user_id = ? and useful = -1";
         template.update(sql, id, userId);
-        Review review = this.getReviewById(id);
-        this.update(review);
     }
 
     private int getReviewRate(int reviewId) {
@@ -179,5 +172,12 @@ public class ReviewRepository {
                 (rs, rowNum) -> rs.getBoolean("match"), id))) {
             throw new NotFoundException("No " + tableName + " with such ID: " + id);
         }
+    }
+
+    private void addEvent(Integer userId, String eventType, Integer entityId, String operation) {
+        template.update("INSERT INTO events " +
+                        "(user_id, event_type, entity_id, operation, event_timestamp) " +
+                        "VALUES(?,?,?,?,CURRENT_TIMESTAMP)",
+                userId, eventType, entityId, operation);
     }
 }

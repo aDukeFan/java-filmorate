@@ -24,7 +24,8 @@ public class FilmRepository {
     private JdbcTemplate template;
 
     public Film create(Film film) {
-        log.info("На сохранение поступил фильм: id {}, name {}, release {}", film.getId(), film.getName(), film.getReleaseDate());
+        log.info("На сохранение поступил фильм: id {}, name {}, release {}",
+                film.getId(), film.getName(), film.getReleaseDate());
         template.update(
                 "insert into films (name, description, release, duration) values(?, ?, ?, ?)",
                 film.getName(),
@@ -196,6 +197,7 @@ public class FilmRepository {
         }
         template.update("insert into likes (film_id, user_id) values(?, ?)", filmId, userId);
         log.info("add user's '{}' like to film with '{}'", userId, filmId);
+        addEvent(userId, "LIKE", filmId, "ADD");
         return getById(filmId);
     }
 
@@ -207,6 +209,7 @@ public class FilmRepository {
         }
         template.update("delete from likes where film_id = ? and user_id = ?", filmId, userId);
         log.info("remove user's '{}' like from film '{}'", userId, filmId);
+        addEvent(userId, "LIKE", filmId, "REMOVE");
         return getById(filmId);
     }
 
@@ -351,5 +354,12 @@ public class FilmRepository {
     public void delFilmById(int filmId) {
         template.update("DELETE FROM public.films WHERE id=?", filmId);
         log.info("deleted film by id '{}'", filmId);
+    }
+
+    private void addEvent(Integer userId, String eventType, Integer entityId, String operation) {
+        template.update("INSERT INTO events " +
+                        "(user_id, event_type, entity_id, operation, event_timestamp) " +
+                        "VALUES(?,?,?,?,CURRENT_TIMESTAMP)",
+                userId, eventType, entityId, operation);
     }
 }

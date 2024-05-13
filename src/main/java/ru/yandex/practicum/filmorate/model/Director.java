@@ -1,8 +1,10 @@
 package ru.yandex.practicum.filmorate.model;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import lombok.experimental.FieldDefaults;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
@@ -12,12 +14,13 @@ import java.util.Objects;
 @Getter
 @Setter
 @Accessors(chain = true)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class Director {
-    private int id;
+    int id;
     @NotNull
     @NotBlank
     @NotEmpty
-    private String name;
+    String name;
 
     @Override
     public boolean equals(Object o) {
