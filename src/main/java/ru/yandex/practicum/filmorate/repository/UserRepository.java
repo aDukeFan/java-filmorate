@@ -15,6 +15,7 @@ import ru.yandex.practicum.filmorate.util.mappers.FilmRowMapper;
 import ru.yandex.practicum.filmorate.util.mappers.UserRowMapper;
 
 import java.sql.PreparedStatement;
+import java.time.ZoneOffset;
 import java.util.*;
 
 @Component
@@ -199,4 +200,9 @@ public class UserRepository {
                 userId, eventType, entityId, operation);
     }
 
+    private boolean isUsersAreFriends(int userId, int friendId) {
+        return Boolean.TRUE.equals(template.queryForObject(
+                "select exists (select * from follows where following_id = ? and followed_id = ?) as match",
+                (rs, rowNum) -> rs.getBoolean("match"), friendId, userId));
+    }
 }

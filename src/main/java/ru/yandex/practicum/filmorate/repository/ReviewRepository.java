@@ -3,10 +3,10 @@ package ru.yandex.practicum.filmorate.repository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.util.mappers.ReviewRowMapper;
 
 import java.util.List;
 
@@ -16,6 +16,7 @@ import java.util.List;
 public class ReviewRepository {
 
     private JdbcTemplate template;
+    private ReviewRowMapper reviewMapper;
 
     public Review create(Review review) {
         log.info("на сохранение получен отзыв с userId: {} filmId: {}",
@@ -86,7 +87,7 @@ public class ReviewRepository {
                         "FROM reviews AS r " +
                         "LEFT JOIN reviews_rates AS rr ON rr.review_id = r.id " +
                         "WHERE r.id = ?",
-                getReviewRowMapper(), id);
+                reviewMapper.mapper(), id);
     }
 
     public List<Review> getAllReviewsByFilmIdAndCount(Integer filmId, Integer count) {
@@ -106,7 +107,7 @@ public class ReviewRepository {
                         "GROUP BY id " +
                         "ORDER BY useful DESC " +
                         "LIMIT (?)",
-                getReviewRowMapper(), filmId, count);
+                reviewMapper.mapper(), filmId, count);
     }
 
     public List<Review> getAllReviewsByCount(int count) {
@@ -121,7 +122,7 @@ public class ReviewRepository {
                         "LEFT JOIN reviews_rates AS rr ON rr.review_id = r.id " +
                         "GROUP BY id " +
                         "LIMIT (?)",
-                getReviewRowMapper(), count);
+                reviewMapper.mapper(), count);
     }
 
     public void addLikeReview(Integer id, Integer userId) {
@@ -155,16 +156,5 @@ public class ReviewRepository {
         String select = "SELECT EXISTS (SELECT id FROM " + tableName + " WHERE id = ?) AS match";
         return Boolean.TRUE.equals(template.queryForObject(select,
                 (rs, rowNum) -> rs.getBoolean("match"), id));
-    }
-
-    private RowMapper<Review> getReviewRowMapper() {
-        return (rs, rowNum) -> Review.builder()
-                .reviewId(rs.getInt("id"))
-                .content(rs.getString("content"))
-                .isPositive(rs.getBoolean("is_positive"))
-                .filmId(rs.getInt("film_id"))
-                .userId(rs.getInt("user_id"))
-                .useful(rs.getInt("useful"))
-                .build();
     }
 }
