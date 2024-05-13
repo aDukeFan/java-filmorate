@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.RepeatException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -192,24 +191,23 @@ public class FilmRepository {
     public Film addLike(Integer filmId, Integer userId) {
         throwNotFoundExceptionForNonExistentId(filmId, "films");
         throwNotFoundExceptionForNonExistentId(userId, "users");
-        if (isFilmLikedByUser(filmId, userId)) {
-            throw new RepeatException("Film may be liked by user only one time");
+        if (!isFilmLikedByUser(filmId, userId)) {
+            template.update("insert into likes (film_id, user_id) values(?, ?)", filmId, userId);
+            log.info("add user's '{}' like to film with '{}'", userId, filmId);
+            addEvent(userId, "LIKE", filmId, "ADD");
         }
-        template.update("insert into likes (film_id, user_id) values(?, ?)", filmId, userId);
-        log.info("add user's '{}' like to film with '{}'", userId, filmId);
-        addEvent(userId, "LIKE", filmId, "ADD");
         return getById(filmId);
     }
 
     public Film removeLike(Integer filmId, Integer userId) {
         throwNotFoundExceptionForNonExistentId(filmId, "films");
         throwNotFoundExceptionForNonExistentId(userId, "users");
-        if (!isFilmLikedByUser(filmId, userId)) {
-            throw new RepeatException("No like by user with ID: " + userId);
+        if (isFilmLikedByUser(filmId, userId)) {
+            template.update("delete from likes where film_id = ? and user_id = ?", filmId, userId);
+            log.info("remove user's '{}' like from film '{}'", userId, filmId);
+            addEvent(userId, "LIKE", filmId, "REMOVE");
         }
-        template.update("delete from likes where film_id = ? and user_id = ?", filmId, userId);
-        log.info("remove user's '{}' like from film '{}'", userId, filmId);
-        addEvent(userId, "LIKE", filmId, "REMOVE");
+
         return getById(filmId);
     }
 
