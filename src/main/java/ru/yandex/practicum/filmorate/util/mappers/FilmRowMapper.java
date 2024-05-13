@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.util;
+package ru.yandex.practicum.filmorate.util.mappers;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -9,11 +9,9 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Rating;
 
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Component
 public class FilmRowMapper {
@@ -24,19 +22,18 @@ public class FilmRowMapper {
         this.template = template;
     }
 
-    public RowMapper<Film> filmRowMapper() {
+    public RowMapper<Film> mapper() {
         return ((rs, rowNum) ->
-                Film.builder()
-                        .id(rs.getInt("id"))
-                        .name(rs.getString("name"))
-                        .description(rs.getString("description"))
-                        .releaseDate(rs.getDate("release").toLocalDate())
-                        .duration(rs.getInt("duration"))
-                        .likes(setLikesUsersFromDb(rs.getInt("id")))
-                        .genres(setGenresFromDb(rs.getInt("id")))
-                        .mpa(setRatingFromDb(rs.getInt("id")))
-                        .directors(setDirectorsFromDb(rs.getInt("id")))
-                        .build());
+                new Film()
+                        .setId(rs.getInt("id"))
+                        .setName(rs.getString("name"))
+                        .setDescription(rs.getString("description"))
+                        .setReleaseDate(rs.getDate("release").toLocalDate())
+                        .setDuration(rs.getInt("duration"))
+                        .setLikes(setLikesUsersFromDb(rs.getInt("id")))
+                        .setGenres(setGenresFromDb(rs.getInt("id")))
+                        .setMpa(setRatingFromDb(rs.getInt("id")))
+                        .setDirectors(setDirectorsFromDb(rs.getInt("id"))));
     }
 
     private Set<Integer> setLikesUsersFromDb(int filmId) {
@@ -63,14 +60,12 @@ public class FilmRowMapper {
                         "WHERE film_id = ?)",
                 filmId);
         while (sqlRowSet.next()) {
-            genres.add(Genre.builder()
-                    .id(sqlRowSet.getInt("id"))
-                    .name(sqlRowSet.getString("name"))
-                    .build());
+            genres.add(
+                    new Genre()
+                            .setId(sqlRowSet.getInt("id"))
+                            .setName(sqlRowSet.getString("name")));
         }
-        return genres.stream()
-                .sorted(Comparator.comparing(Genre::getId))
-                .collect(Collectors.toSet());
+        return genres;
     }
 
     private Rating setRatingFromDb(int filmId) {
@@ -87,10 +82,9 @@ public class FilmRowMapper {
 
     private RowMapper<Rating> mpaRowMapper() {
         return ((rs, rowNum) ->
-                Rating.builder()
-                        .id(rs.getInt("id"))
-                        .name(rs.getString("name"))
-                        .build());
+                new Rating()
+                        .setId(rs.getInt("id"))
+                        .setName(rs.getString("name")));
     }
 
     private Set<Director> setDirectorsFromDb(int filmId) {
@@ -104,13 +98,11 @@ public class FilmRowMapper {
                         "WHERE film_id = ?)",
                 filmId);
         while (sqlRowSet.next()) {
-            directors.add(Director.builder()
-                    .id(sqlRowSet.getInt("id"))
-                    .name(sqlRowSet.getString("name"))
-                    .build());
+            directors.add(
+                    new Director()
+                            .setId(sqlRowSet.getInt("id"))
+                            .setName(sqlRowSet.getString("name")));
         }
-        return directors.stream()
-                .sorted(Comparator.comparing(Director::getId))
-                .collect(Collectors.toSet());
+        return directors;
     }
 }

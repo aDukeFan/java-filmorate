@@ -10,6 +10,7 @@ import lombok.experimental.FieldDefaults;
 import javax.validation.constraints.*;
 import java.time.LocalDate;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @ToString
@@ -31,46 +32,16 @@ public class User {
     LocalDate birthday;
     Set<Integer> friends = new LinkedHashSet<>();
 
-    public static Builder builder() {
-        return new User().new Builder();
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return Objects.equals(id, user.id);
     }
 
-    public class Builder {
-        private Builder() {
-        }
-
-        public Builder id(Integer id) {
-            User.this.id = id;
-            return this;
-        }
-
-        public Builder email(String email) {
-            User.this.email = email;
-            return this;
-        }
-
-        public Builder login(String login) {
-            User.this.login = login;
-            return this;
-        }
-
-        public Builder name(String name) {
-            User.this.name = name;
-            return this;
-        }
-
-        public Builder birthday(LocalDate birthday) {
-            User.this.birthday = birthday;
-            return this;
-        }
-
-        public Builder friends(Set<Integer> friends) {
-            User.this.friends = friends;
-            return this;
-        }
-
-        public User build() {
-            return User.this;
-        }
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

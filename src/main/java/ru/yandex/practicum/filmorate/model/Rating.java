@@ -20,36 +20,13 @@ public class Rating {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Rating)) return false;
+        if (o == null || getClass() != o.getClass()) return false;
         Rating rating = (Rating) o;
-        return id == rating.id && Objects.equals(name, rating.name);
+        return id == rating.id;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, name);
-    }
-
-    public static Rating.Builder builder() {
-        return new Rating().new Builder();
-    }
-
-    public class Builder {
-        private Builder() {
-        }
-
-        public Rating.Builder id(Integer id) {
-            Rating.this.id = id;
-            return this;
-        }
-
-        public Rating.Builder name(String name) {
-            Rating.this.name = name;
-            return this;
-        }
-
-        public Rating build() {
-            return Rating.this;
-        }
+        return Objects.hash(id);
     }
 }
