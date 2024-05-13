@@ -18,7 +18,7 @@ class FilmFeaturesRepositoriesTest {
 
     @Test
     void testGetGenreById() {
-        GenreRepository repository = new GenreRepository(template, null);
+        GenreRepository repository = new GenreRepository(template, null, null);
         Genre genre = new Genre().setId(7).setName("Экшн");
         repository.create(genre);
         Genre savedGenre = repository.getById(7);
@@ -29,7 +29,7 @@ class FilmFeaturesRepositoriesTest {
 
     @Test
     void getRatingById() {
-        RatingRepository repository = new RatingRepository(template, null);
+        RatingRepository repository = new RatingRepository(template, null, null);
         Rating rating = new Rating().setId(6).setName("XYZ");
         repository.create(rating);
         Rating savedRating = repository.getById(6);

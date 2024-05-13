@@ -7,10 +7,11 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.util.Checking;
+import ru.yandex.practicum.filmorate.util.CreatingEvents;
 import ru.yandex.practicum.filmorate.util.mappers.FilmRowMapper;
 import ru.yandex.practicum.filmorate.util.mappers.UserRowMapper;
 
@@ -26,6 +27,8 @@ public class UserRepository {
     private JdbcTemplate template;
     private FilmRowMapper filmRowMapper;
     private UserRowMapper userRowMapper;
+    private CreatingEvents events;
+    private Checking checking;
 
     public User create(User user) {
         if (user.getName().isEmpty()) {
@@ -46,7 +49,7 @@ public class UserRepository {
     }
 
     public User update(User user) {
-        throwNotFoundExceptionForNonExistentUserId(user.getId());
+        checking.exist(user.getId(), "users");
         template.update(
                 "update users set name = ?, login = ?, email = ?, birthday = ? where id = ?",
                 user.getName(), user.getLogin(), user.getEmail(), user.getBirthday(), user.getId());
@@ -56,7 +59,7 @@ public class UserRepository {
 
 
     public User getById(Integer id) {
-        throwNotFoundExceptionForNonExistentUserId(id);
+        checking.exist(id, "users");
         return template.queryForObject("select * from users where id = ?", userRowMapper.mapper(), id);
     }
 
@@ -65,34 +68,34 @@ public class UserRepository {
     }
 
     public User addFollow(Integer userId, Integer friendId) {
-        throwNotFoundExceptionForNonExistentUserId(userId);
-        throwNotFoundExceptionForNonExistentUserId(friendId);
-        if (!isUsersAreFriends(userId, friendId)) {
+        checking.exist(userId, "users");
+        checking.exist(friendId, "users");
+        if (!checking.isFriends(userId, friendId)) {
             template.update(
                     "insert into follows (following_id, followed_id) values(?, ?)",
                     friendId, userId);
             log.info("subscribe user '{}' to user '{}'", userId, friendId);
-            addEvent(userId, "FRIEND", friendId, "ADD");
+            events.addEvent(userId, "FRIEND", friendId, "ADD");
         }
         return getById(userId);
     }
 
     public User removeFollowing(Integer userId, Integer friendId) {
-        throwNotFoundExceptionForNonExistentUserId(userId);
-        throwNotFoundExceptionForNonExistentUserId(friendId);
-        if (isUsersAreFriends(userId, friendId)) {
+        checking.exist(userId, "users");
+        checking.exist(friendId, "users");
+        if (checking.isFriends(userId, friendId)) {
             template.update(
                     "delete from follows where following_id = ? and followed_id = ?",
                     friendId, userId);
             log.info("unsubscribe user '{}' from user '{}'", userId, friendId);
-            addEvent(userId, "FRIEND", friendId, "REMOVE");
+            events.addEvent(userId, "FRIEND", friendId, "REMOVE");
         }
         return getById(userId);
     }
 
     public List<User> getSameFollowers(Integer userId, Integer friendId) {
-        throwNotFoundExceptionForNonExistentUserId(userId);
-        throwNotFoundExceptionForNonExistentUserId(friendId);
+        checking.exist(userId, "users");
+        checking.exist(friendId, "users");
         log.info("show same followers of user '{}' and user '{}'", userId, friendId);
         return template.query(
                 "select * from users where id IN(" +
@@ -103,7 +106,7 @@ public class UserRepository {
     }
 
     public List<User> getFollowers(Integer userId) {
-        throwNotFoundExceptionForNonExistentUserId(userId);
+        checking.exist(userId, "users");
         log.info("show followers of user '{}'", userId);
         return template.query(
                 "select * from users where id in (" +
@@ -158,27 +161,19 @@ public class UserRepository {
         return Collections.emptyList();
     }
 
-    private void throwNotFoundExceptionForNonExistentUserId(int id) {
-        if (Boolean.FALSE.equals(template.queryForObject(
-                "select exists (select id from users where id = ?) as match",
-                (rs, rowNum) -> rs.getBoolean("match"), id))) {
-            throw new NotFoundException("No users with such ID: " + id);
-        }
-    }
-
     public void delUserById(int userId) {
-        throwNotFoundExceptionForNonExistentUserId(userId);
+        checking.exist(userId, "users");
         template.update("DELETE FROM users WHERE id=?", userId);
         log.info("deleted user by id '{}'", userId);
     }
 
     public List<Event> getEventsByUserId(Integer id) {
-        throwNotFoundExceptionForNonExistentUserId(id);
+        checking.exist(id, "users");
         SqlRowSet sqlRowSet = template.queryForRowSet("SELECT * FROM events WHERE user_id = ?", id);
         List<Event> events = new ArrayList<>();
         while (sqlRowSet.next()) {
             Event event = new Event()
-                    .setTimestamp(sqlRowSet.getTimestamp("event_timestamp")
+                    .setTimestamp(Objects.requireNonNull(sqlRowSet.getTimestamp("event_timestamp"))
                             .toLocalDateTime()
                             .toInstant(ZoneOffset.UTC)
                             .toEpochMilli())
@@ -191,18 +186,5 @@ public class UserRepository {
         }
         events.sort(Comparator.comparing(Event::getEventId));
         return events;
-    }
-
-    private void addEvent(Integer userId, String eventType, Integer entityId, String operation) {
-        template.update("INSERT INTO events " +
-                        "(user_id, event_type, entity_id, operation, event_timestamp) " +
-                        "VALUES(?,?,?,?,CURRENT_TIMESTAMP)",
-                userId, eventType, entityId, operation);
-    }
-
-    private boolean isUsersAreFriends(int userId, int friendId) {
-        return Boolean.TRUE.equals(template.queryForObject(
-                "select exists (select * from follows where following_id = ? and followed_id = ?) as match",
-                (rs, rowNum) -> rs.getBoolean("match"), friendId, userId));
     }
 }

@@ -5,8 +5,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.util.Checking;
 import ru.yandex.practicum.filmorate.util.mappers.GenreRowMapper;
 
 import java.sql.PreparedStatement;
@@ -19,6 +19,7 @@ public class GenreRepository {
 
     private JdbcTemplate template;
     private GenreRowMapper genreRowMapper;
+    private Checking checking;
 
     public Genre create(Genre genre) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -33,7 +34,7 @@ public class GenreRepository {
     }
 
     public Genre update(Genre genre) {
-        throwNotFoundExceptionForNonExistentId(genre.getId());
+        checking.exist(genre.getId(), "genres");
         template.update(
                 "update genres set name = ? where id = ?",
                 genre.getName(), genre.getId());
@@ -41,7 +42,7 @@ public class GenreRepository {
     }
 
     public Genre getById(int genreId) {
-        throwNotFoundExceptionForNonExistentId(genreId);
+        checking.exist(genreId, "genres");
         return template.queryForObject(
                 "select * from genres where id = ?", genreRowMapper.mapper(),
                 genreId);
@@ -52,16 +53,7 @@ public class GenreRepository {
     }
 
     public void removeById(int genreId) {
-        throwNotFoundExceptionForNonExistentId(genreId);
+        checking.exist(genreId, "genres");
         template.update("delete from genres where id = ?", genreId);
-    }
-
-
-    private void throwNotFoundExceptionForNonExistentId(int id) {
-        String select = "select exists (select id from genres where id = ?) as match";
-        if (Boolean.FALSE.equals(template.queryForObject(select,
-                (rs, rowNum) -> rs.getBoolean("match"), id))) {
-            throw new NotFoundException("No users with such ID: " + id);
-        }
     }
 }
