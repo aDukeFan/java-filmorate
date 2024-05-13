@@ -8,6 +8,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.util.mappers.FilmRowMapper;
@@ -65,20 +66,26 @@ public class UserRepository {
     public User addFollow(Integer userId, Integer friendId) {
         throwNotFoundExceptionForNonExistentUserId(userId);
         throwNotFoundExceptionForNonExistentUserId(friendId);
-        template.update(
-                "insert into follows (following_id, followed_id) values(?, ?)",
-                friendId, userId);
-        log.info("subscribe user '{}' to user '{}'", userId, friendId);
+        if (!isUsersAreFriends(userId, friendId)) {
+            template.update(
+                    "insert into follows (following_id, followed_id) values(?, ?)",
+                    friendId, userId);
+            log.info("subscribe user '{}' to user '{}'", userId, friendId);
+            addEvent(userId, "FRIEND", friendId, "ADD");
+        }
         return getById(userId);
     }
 
     public User removeFollowing(Integer userId, Integer friendId) {
         throwNotFoundExceptionForNonExistentUserId(userId);
         throwNotFoundExceptionForNonExistentUserId(friendId);
-        template.update(
-                "delete from follows where following_id = ? and followed_id = ?",
-                friendId, userId);
-        log.info("unsubscribe user '{}' from user '{}'", userId, friendId);
+        if (isUsersAreFriends(userId, friendId)) {
+            template.update(
+                    "delete from follows where following_id = ? and followed_id = ?",
+                    friendId, userId);
+            log.info("unsubscribe user '{}' from user '{}'", userId, friendId);
+            addEvent(userId, "FRIEND", friendId, "REMOVE");
+        }
         return getById(userId);
     }
 
@@ -159,7 +166,37 @@ public class UserRepository {
     }
 
     public void delUserById(int userId) {
+        throwNotFoundExceptionForNonExistentUserId(userId);
         template.update("DELETE FROM users WHERE id=?", userId);
         log.info("deleted user by id '{}'", userId);
     }
+
+    public List<Event> getEventsByUserId(Integer id) {
+        throwNotFoundExceptionForNonExistentUserId(id);
+        SqlRowSet sqlRowSet = template.queryForRowSet("SELECT * FROM events WHERE user_id = ?", id);
+        List<Event> events = new ArrayList<>();
+        while (sqlRowSet.next()) {
+            Event event = new Event()
+                    .setTimestamp(sqlRowSet.getTimestamp("event_timestamp")
+                            .toLocalDateTime()
+                            .toInstant(ZoneOffset.UTC)
+                            .toEpochMilli())
+                    .setEventType(sqlRowSet.getString("event_type"))
+                    .setEventId(sqlRowSet.getInt("event_id"))
+                    .setOperation(sqlRowSet.getString("operation"))
+                    .setUserId(sqlRowSet.getInt("user_id"))
+                    .setEntityId(sqlRowSet.getInt("entity_id"));
+            events.add(event);
+        }
+        events.sort(Comparator.comparing(Event::getEventId));
+        return events;
+    }
+
+    private void addEvent(Integer userId, String eventType, Integer entityId, String operation) {
+        template.update("INSERT INTO events " +
+                        "(user_id, event_type, entity_id, operation, event_timestamp) " +
+                        "VALUES(?,?,?,?,CURRENT_TIMESTAMP)",
+                userId, eventType, entityId, operation);
+    }
+
 }

@@ -1,9 +1,11 @@
 package ru.yandex.practicum.filmorate.model;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
+import lombok.experimental.FieldDefaults;
 
 import javax.validation.constraints.*;
 import java.time.LocalDate;
@@ -15,19 +17,20 @@ import java.util.Set;
 @Getter
 @Setter
 @Accessors(chain = true)
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class User {
-    private Integer id;
-    private String name;
+    Integer id;
+    String name;
     @NotNull
     @Email
-    private String email;
+    String email;
     @NotEmpty
     @NotNull
     @Pattern(regexp = "^[A-Za-z0-9]*$")
-    private String login;
+    String login;
     @Past
-    private LocalDate birthday;
-    private Set<Integer> friends = new LinkedHashSet<>();
+    LocalDate birthday;
+    Set<Integer> friends = new LinkedHashSet<>();
 
     @Override
     public boolean equals(Object o) {

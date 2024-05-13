@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.RepeatException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -26,7 +25,8 @@ public class FilmRepository {
     private FilmRowMapper filmRowMapper;
 
     public Film create(Film film) {
-        log.info("На сохранение поступил фильм: id {}, name {}, release {}", film.getId(), film.getName(), film.getReleaseDate());
+        log.info("На сохранение поступил фильм: id {}, name {}, release {}",
+                film.getId(), film.getName(), film.getReleaseDate());
         template.update(
                 "insert into films (name, description, release, duration) values(?, ?, ?, ?)",
                 film.getName(),
@@ -188,22 +188,19 @@ public class FilmRepository {
     public Film addLike(Integer filmId, Integer userId) {
         throwNotFoundExceptionForNonExistentId(filmId, "films");
         throwNotFoundExceptionForNonExistentId(userId, "users");
-        if (isFilmLikedByUser(filmId, userId)) {
-            throw new RepeatException("Film may be liked by user only one time");
-        }
         template.update("insert into likes (film_id, user_id) values(?, ?)", filmId, userId);
         log.info("add user's '{}' like to film with '{}'", userId, filmId);
+        addEvent(userId, "LIKE", filmId, "ADD");
         return getById(filmId);
     }
 
     public Film removeLike(Integer filmId, Integer userId) {
         throwNotFoundExceptionForNonExistentId(filmId, "films");
         throwNotFoundExceptionForNonExistentId(userId, "users");
-        if (!isFilmLikedByUser(filmId, userId)) {
-            throw new RepeatException("No like by user with ID: " + userId);
-        }
         template.update("delete from likes where film_id = ? and user_id = ?", filmId, userId);
         log.info("remove user's '{}' like from film '{}'", userId, filmId);
+        addEvent(userId, "LIKE", filmId, "REMOVE");
+
         return getById(filmId);
     }
 
@@ -307,12 +304,6 @@ public class FilmRepository {
                 .collect(Collectors.toList());
     }
 
-    private boolean isFilmLikedByUser(int filmId, int userId) {
-        return Boolean.TRUE.equals(template.queryForObject(
-                "select exists (select * from likes where film_id = ? and user_id = ?) as match",
-                (rs, rowNum) -> rs.getBoolean("match"), filmId, userId));
-    }
-
     private boolean isSetFilmRating(Integer id) {
         return Boolean.TRUE.equals(template.queryForObject(
                 "select exists (select rating_id from films where rating_id is not null and id = ?) as match",
@@ -347,5 +338,12 @@ public class FilmRepository {
     public void delFilmById(int filmId) {
         template.update("DELETE FROM public.films WHERE id=?", filmId);
         log.info("deleted film by id '{}'", filmId);
+    }
+
+    private void addEvent(Integer userId, String eventType, Integer entityId, String operation) {
+        template.update("INSERT INTO events " +
+                        "(user_id, event_type, entity_id, operation, event_timestamp) " +
+                        "VALUES(?,?,?,?,CURRENT_TIMESTAMP)",
+                userId, eventType, entityId, operation);
     }
 }

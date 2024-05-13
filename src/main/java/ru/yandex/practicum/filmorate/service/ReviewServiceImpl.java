@@ -5,7 +5,9 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.repository.ReviewRepository;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -35,7 +37,15 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public List<Review> getAll(Integer filmId, Integer count) {
-        return repository.getAll(filmId, count);
+        if (filmId == -1) {
+            return repository.getAllReviewsByCount(count).stream()
+                    .sorted(Comparator.comparingInt(Review::getUseful).reversed())
+                    .collect(Collectors.toList());
+        } else {
+            return repository.getAllReviewsByFilmIdAndCount(filmId, count).stream()
+                    .sorted(Comparator.comparingInt(Review::getUseful).reversed())
+                    .collect(Collectors.toList());
+        }
     }
 
     @Override
