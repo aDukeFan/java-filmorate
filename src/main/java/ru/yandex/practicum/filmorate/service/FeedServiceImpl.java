@@ -13,7 +13,7 @@ import java.util.List;
 @Service
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class FeedServiceImpl implements FeedService{
+public class FeedServiceImpl implements FeedService {
 
     EventRepository repository;
 
