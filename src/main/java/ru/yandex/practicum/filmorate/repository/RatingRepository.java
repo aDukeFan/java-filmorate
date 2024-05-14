@@ -5,8 +5,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Rating;
+import ru.yandex.practicum.filmorate.util.Checking;
 import ru.yandex.practicum.filmorate.util.mappers.RatingRowMapper;
 
 import java.sql.PreparedStatement;
@@ -19,9 +19,9 @@ public class RatingRepository {
 
     private JdbcTemplate template;
     private RatingRowMapper ratingRowMapper;
+    private Checking checking;
 
     public Rating create(Rating rating) {
-
         KeyHolder keyHolder = new GeneratedKeyHolder();
         template.update(connection -> {
             PreparedStatement stmt = connection.prepareStatement(
@@ -34,7 +34,7 @@ public class RatingRepository {
     }
 
     public Rating update(Rating rating) {
-        throwNotFoundExceptionForNonExistentId(rating.getId());
+        checking.exist(rating.getId(), "ratings");
         template.update(
                 "update ratings set name = ? where id = ?",
                 rating.getName(), rating.getId());
@@ -42,7 +42,7 @@ public class RatingRepository {
     }
 
     public Rating getById(int ratingId) {
-        throwNotFoundExceptionForNonExistentId(ratingId);
+        checking.exist(ratingId, "ratings");
         return template.queryForObject(
                 "select * from ratings where id = ?", ratingRowMapper.mapper(),
                 ratingId);
@@ -53,17 +53,7 @@ public class RatingRepository {
     }
 
     public void removeById(int ratingId) {
-        throwNotFoundExceptionForNonExistentId(ratingId);
+        checking.exist(ratingId, "ratings");
         template.update("delete from ratings where id = ?", ratingId);
-
     }
-
-    private void throwNotFoundExceptionForNonExistentId(int id) {
-        String select = "select exists (select id from ratings where id = ?) as match";
-        if (Boolean.FALSE.equals(template.queryForObject(select,
-                (rs, rowNum) -> rs.getBoolean("match"), id))) {
-            throw new NotFoundException("No users with such ID: " + id);
-        }
-    }
-
 }

@@ -3,12 +3,17 @@ package ru.yandex.practicum.filmorate.repository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.util.Checking;
+import ru.yandex.practicum.filmorate.util.CreatingEvents;
+import ru.yandex.practicum.filmorate.util.mappers.ReviewRowMapper;
 
+import java.sql.PreparedStatement;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Component
@@ -16,66 +21,63 @@ import java.util.List;
 public class ReviewRepository {
 
     private JdbcTemplate template;
+    private ReviewRowMapper reviewMapper;
+    private Checking checking;
+    private CreatingEvents events;
 
     public Review create(Review review) {
         log.info("на сохранение получен отзыв с userId: {} filmId: {}",
-                review.getUserId(),
-                review.getFilmId());
-        if (!doesObjectExist(review.getUserId(), "users")) {
-            throw new NotFoundException("No users with such id");
-        }
-        if (!doesObjectExist(review.getFilmId(), "films")) {
-            throw new NotFoundException("No film with such id");
-        }
+                review.getUserId(), review.getFilmId());
 
-        String sql = "INSERT INTO reviews(content, is_positive, user_id, film_id) VALUES(?,?,?,?)";
-        template.update(sql,
-                review.getContent(),
-                review.getIsPositive(),
-                review.getUserId(),
-                review.getFilmId());
-        String sqlForGettingId = "select max(id) as last from reviews";
-        Integer reviewId = template.queryForObject(sqlForGettingId, Integer.class);
-        review.setReviewId(reviewId);
+        checking.exist(review.getUserId(), "users");
+        checking.exist(review.getFilmId(), "films");
+
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        template.update(connection -> {
+            PreparedStatement stmt = connection.prepareStatement(
+                    "INSERT INTO reviews(content, is_positive, user_id, film_id) VALUES(?,?,?,?)",
+                    new String[]{"id"});
+            stmt.setString(1, review.getContent());
+            stmt.setBoolean(2, review.getIsPositive());
+            stmt.setInt(3, review.getUserId());
+            stmt.setInt(4, review.getFilmId());
+            return stmt;
+        }, keyHolder);
+        review.setReviewId(Objects.requireNonNull(keyHolder.getKey()).intValue());
         log.info("Создан отзыв с id {}", review.getReviewId());
-        addEvent(review.getUserId(), "REVIEW", review.getReviewId(), "ADD");
+        events.addEvent(review.getUserId(), "REVIEW", review.getReviewId(), "ADD");
         return review;
     }
 
     public Review update(Review review) {
         Integer id = review.getReviewId();
-        if (doesObjectExist(id, "reviews")) {
-            Integer authorId = template.queryForObject(
-                    "select user_id from reviews where id = ?",
-                    Integer.class, id);
-            template.update("UPDATE reviews " +
-                            "SET content = ?, is_positive = ? " +
-                            "WHERE id = ?",
-                    review.getContent(),
-                    review.getIsPositive(),
-                    review.getReviewId());
-            log.info("Обновлен отзыв с id {}", review.getReviewId());
-            addEvent(authorId, "REVIEW", id, "UPDATE");
-        }
+        checking.exist(id, "reviews");
+        Integer authorId = template.queryForObject(
+                "select user_id from reviews where id = ?",
+                Integer.class,
+                id);
+        template.update("UPDATE reviews " +
+                        "SET content = ?, is_positive = ? " +
+                        "WHERE id = ?",
+                review.getContent(), review.getIsPositive(), review.getReviewId());
+        log.info("Обновлен отзыв с id {}", review.getReviewId());
+        events.addEvent(authorId, "REVIEW", id, "UPDATE");
         return getReviewById(review.getReviewId());
     }
 
     public void delete(Integer id) {
-        if (doesObjectExist(id, "reviews")) {
-            Integer authorId = template.queryForObject(
-                    "select user_id from reviews where id = ?",
-                    Integer.class, id);
-            String sql = "delete from reviews where id = ?";
-            template.update(sql, id);
-            log.info("Удален отзыв с id {}", id);
-            addEvent(authorId, "REVIEW", id, "REMOVE");
-        }
+        checking.exist(id, "reviews");
+        Integer authorId = template.queryForObject(
+                "select user_id from reviews where id = ?",
+                Integer.class, id);
+
+        template.update("delete from reviews where id = ?", id);
+        log.info("Удален отзыв с id {}", id);
+        events.addEvent(authorId, "REVIEW", id, "REMOVE");
     }
 
     public Review getReviewById(Integer id) {
-        if (!doesObjectExist(id, "reviews")) {
-            throw new NotFoundException("No reviews with such ID: " + id);
-        }
+        checking.exist(id, "reviews");
         return template.queryForObject("SELECT " +
                         "r.id AS id, " +
                         "r.content AS content, " +
@@ -86,13 +88,11 @@ public class ReviewRepository {
                         "FROM reviews AS r " +
                         "LEFT JOIN reviews_rates AS rr ON rr.review_id = r.id " +
                         "WHERE r.id = ?",
-                getReviewRowMapper(), id);
+                reviewMapper.mapper(), id);
     }
 
     public List<Review> getAllReviewsByFilmIdAndCount(Integer filmId, Integer count) {
-        if (!doesObjectExist(filmId, "films")) {
-            throw new NotFoundException("No film with such id");
-        }
+        checking.exist(filmId, "films");
         return template.query("SELECT " +
                         "r.id AS id, " +
                         "r.content AS content, " +
@@ -106,7 +106,7 @@ public class ReviewRepository {
                         "GROUP BY id " +
                         "ORDER BY useful DESC " +
                         "LIMIT (?)",
-                getReviewRowMapper(), filmId, count);
+                reviewMapper.mapper(), filmId, count);
     }
 
     public List<Review> getAllReviewsByCount(int count) {
@@ -121,50 +121,30 @@ public class ReviewRepository {
                         "LEFT JOIN reviews_rates AS rr ON rr.review_id = r.id " +
                         "GROUP BY id " +
                         "LIMIT (?)",
-                getReviewRowMapper(), count);
+                reviewMapper.mapper(), count);
     }
 
     public void addLikeReview(Integer id, Integer userId) {
-        String sql = "INSERT INTO reviews_rates (review_id, user_id, useful) VALUES (?, ?, ?)";
-        template.update(sql, id, userId, 1);
+        template.update(
+                "INSERT INTO reviews_rates (review_id, user_id, useful) VALUES (?, ?, ?)",
+                id, userId, 1);
     }
 
     public void addDisLikeToReview(Integer id, Integer userId) {
-        String sql = "INSERT INTO reviews_rates(review_id, user_id, useful) VALUES (?, ?, ?)";
-        template.update(sql, id, userId, -1);
+        template.update(
+                "INSERT INTO reviews_rates(review_id, user_id, useful) VALUES (?, ?, ?)",
+                id, userId, -1);
     }
 
     public void deleteLikeReview(Integer id, Integer userId) {
-        String sql = "DELETE FROM reviews_rates WHERE review_id = ? AND user_id = ? AND useful = 1";
-        template.update(sql, id, userId);
+        template.update(
+                "DELETE FROM reviews_rates WHERE review_id = ? AND user_id = ? AND useful = 1",
+                id, userId);
     }
 
     public void deleteDisLikeFromReview(Integer id, Integer userId) {
-        String sql = "DELETE FROM reviews_rates WHERE review_id = ? AND user_id = ? AND useful = -1";
-        template.update(sql, id, userId);
-    }
-
-    private void addEvent(Integer userId, String eventType, Integer entityId, String operation) {
-        template.update("INSERT INTO events " +
-                        "(user_id, event_type, entity_id, operation, event_timestamp) " +
-                        "VALUES(?,?,?,?,CURRENT_TIMESTAMP)",
-                userId, eventType, entityId, operation);
-    }
-
-    private Boolean doesObjectExist(Integer id, String tableName) {
-        String select = "SELECT EXISTS (SELECT id FROM " + tableName + " WHERE id = ?) AS match";
-        return Boolean.TRUE.equals(template.queryForObject(select,
-                (rs, rowNum) -> rs.getBoolean("match"), id));
-    }
-
-    private RowMapper<Review> getReviewRowMapper() {
-        return (rs, rowNum) -> Review.builder()
-                .reviewId(rs.getInt("id"))
-                .content(rs.getString("content"))
-                .isPositive(rs.getBoolean("is_positive"))
-                .filmId(rs.getInt("film_id"))
-                .userId(rs.getInt("user_id"))
-                .useful(rs.getInt("useful"))
-                .build();
+        template.update(
+                "DELETE FROM reviews_rates WHERE review_id = ? AND user_id = ? AND useful = -1",
+                id, userId);
     }
 }

@@ -6,8 +6,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Director;
+import ru.yandex.practicum.filmorate.util.Checking;
 import ru.yandex.practicum.filmorate.util.mappers.DirectorRowMapper;
 
 import java.sql.PreparedStatement;
@@ -21,6 +21,7 @@ public class DirectorRepository {
 
     private JdbcTemplate template;
     private DirectorRowMapper directorRowMapper;
+    private Checking checking;
 
     public Director create(Director director) {
         log.info("Директор с именем: {} - получен на сохранение", director.getName());
@@ -37,7 +38,7 @@ public class DirectorRepository {
     }
 
     public Director update(Director director) {
-        throwNotFoundExceptionForNonExistentId(director.getId());
+        checking.exist(director.getId(), "directors");
         template.update(
                 "update directors set name = ? where id = ?",
                 director.getName(), director.getId());
@@ -46,7 +47,7 @@ public class DirectorRepository {
     }
 
     public Director getById(Integer id) {
-        throwNotFoundExceptionForNonExistentId(id);
+        checking.exist(id, "directors");
         return template.queryForObject(
                 "select * from directors where id = ?", directorRowMapper.mapper(),
                 id);
@@ -57,18 +58,11 @@ public class DirectorRepository {
     }
 
     public void removeById(Integer id) {
-        throwNotFoundExceptionForNonExistentId(id);
+        checking.exist(id, "directors");
         template.update("delete from directors_films where director_id = ?", id);
         log.info("Директор с id {} исключен из фильмов", id);
         template.update("delete from directors where id = ?", id);
         log.info("Директор с id {} удален", id);
     }
 
-    private void throwNotFoundExceptionForNonExistentId(int id) {
-        String select = "select exists (select id from directors where id = ?) as match";
-        if (Boolean.FALSE.equals(template.queryForObject(select,
-                (rs, rowNum) -> rs.getBoolean("match"), id))) {
-            throw new NotFoundException("No directors with such ID: " + id);
-        }
-    }
 }
