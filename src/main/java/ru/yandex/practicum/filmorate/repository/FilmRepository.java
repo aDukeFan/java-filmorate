@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Rating;
 import ru.yandex.practicum.filmorate.util.Checking;
 import ru.yandex.practicum.filmorate.util.mappers.FilmRowMapper;
 
@@ -128,61 +127,14 @@ public class FilmRepository {
 
     public Film getById(Integer filmId) {
         checking.exist(filmId, "films");
-        Film film = template.queryForObject(
-                "select name, description, release, duration from films where id = ?",
-                (rs, rowNum) -> new Film()
-                        .setId(filmId)
-                        .setName(rs.getString("name"))
-                        .setDescription(rs.getString("description"))
-                        .setDuration(rs.getInt("duration"))
-                        .setReleaseDate(rs.getDate("release").toLocalDate()), filmId);
-
-        if (checking.isFilmWithRating(filmId)) {
-            Integer ratingId = template.queryForObject(
-                    "select rating_id as mpa_id from films where id = ?",
-                    (rs, rowNum) -> rs.getInt("mpa_id"), filmId);
-            Rating mpa = template.queryForObject(
-                    "select * from ratings where id = ?",
-                    (rs, rowNum) -> new Rating()
-                            .setName(rs.getString("name"))
-                            .setId(rs.getInt("id")), ratingId);
-            Objects.requireNonNull(film).setMpa(mpa);
-        }
-        List<Integer> genresIds = template.query(
-                "select genre_id as id from genres_films where film_id = ?",
-                (rs, rowNum) -> rs.getInt("id"), filmId);
-        if (!genresIds.isEmpty()) {
-            List<Genre> genresList = new LinkedList<>();
-            genresIds.forEach(genreId -> genresList.add(template.queryForObject(
-                    "select * from genres where id = ?",
-                    (rs, rowNum) -> new Genre()
-                            .setId(rs.getInt("id"))
-                            .setName(rs.getString("name")), genreId)));
-            Objects.requireNonNull(film).getGenres().addAll(genresList);
-        }
-
-        List<Director> filmDirectors = template.query(
-                "select d.id, d.name " +
-                        "from directors_films df " +
-                        "join directors d on d.id = df.director_id " +
-                        "where df.film_id = ?",
-                (rs, rowNum) -> new Director()
-                        .setId(rs.getInt("id"))
-                        .setName(rs.getString("name")), filmId);
-        Objects.requireNonNull(film).getDirectors().addAll(filmDirectors);
-
-        List<Integer> likesList = template.query(
-                "select user_id as id from likes where film_id = ?",
-                (rs, rowNum) -> rs.getInt("id"), filmId);
-        if (!likesList.isEmpty()) {
-            film.getLikes().addAll(likesList);
-        }
         log.info("show film '{}'", filmId);
-        return film;
+        return template.queryForObject("select * from films where id = ?",
+                filmRowMapper.mapperWithAllParameters(), filmId);
     }
 
     public List<Film> findAll() {
-        return template.query("select * from films order by id asc", filmRowMapper.mapper());
+        return template.query("select * from films order by id asc",
+                filmRowMapper.mapperWithAllParameters());
     }
 
     public Film addLike(Integer filmId, Integer userId) {

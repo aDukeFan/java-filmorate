@@ -151,7 +151,7 @@ public class UserRepository {
                             "from films " +
                             "where id IN " +
                             "(select * " +
-                            "from recommended_films)", filmRowMapper.mapper());
+                            "from recommended_films)", filmRowMapper.mapperWithAllParameters());
 
             template.execute("drop table if exists recommended_films");
 

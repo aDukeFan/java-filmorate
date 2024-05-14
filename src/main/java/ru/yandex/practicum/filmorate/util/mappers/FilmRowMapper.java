@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.util.mappers;
 
+import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -14,15 +15,12 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 @Component
+@AllArgsConstructor
 public class FilmRowMapper {
 
     private final JdbcTemplate template;
 
-    public FilmRowMapper(JdbcTemplate template) {
-        this.template = template;
-    }
-
-    public RowMapper<Film> mapper() {
+    public RowMapper<Film> mapperWithAllParameters() {
         return ((rs, rowNum) ->
                 new Film()
                         .setId(rs.getInt("id"))
@@ -54,8 +52,8 @@ public class FilmRowMapper {
         SqlRowSet sqlRowSet = template.queryForRowSet(
                 "SELECT * " +
                         "FROM genres " +
-                        "WHERE id IN (" +
-                        "   SELECT genre_id " +
+                        "WHERE id IN " +
+                        "(SELECT genre_id " +
                         "FROM genres_films " +
                         "WHERE film_id = ?)",
                 filmId);
@@ -92,8 +90,8 @@ public class FilmRowMapper {
         SqlRowSet sqlRowSet = template.queryForRowSet(
                 "SELECT * " +
                         "FROM directors " +
-                        "WHERE id IN (" +
-                        "   SELECT director_id " +
+                        "WHERE id IN " +
+                        "(SELECT director_id " +
                         "FROM directors_films " +
                         "WHERE film_id = ?)",
                 filmId);
