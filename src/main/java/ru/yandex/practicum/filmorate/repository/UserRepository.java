@@ -10,9 +10,9 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.util.ExistChecker;
-import ru.yandex.practicum.filmorate.util.mappers.FilmRowMapper;
-import ru.yandex.practicum.filmorate.util.mappers.UserRowMapper;
+import ru.yandex.practicum.filmorate.repository.util.ExistChecker;
+import ru.yandex.practicum.filmorate.repository.mapper.FilmRowMapper;
+import ru.yandex.practicum.filmorate.repository.mapper.UserRowMapper;
 
 import java.sql.PreparedStatement;
 import java.time.ZoneOffset;

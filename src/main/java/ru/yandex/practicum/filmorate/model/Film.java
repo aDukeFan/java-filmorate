@@ -6,7 +6,7 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 import lombok.experimental.FieldDefaults;
-import ru.yandex.practicum.filmorate.util.ReleaseDate;
+import ru.yandex.practicum.filmorate.model.Validator.ReleaseDate;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;

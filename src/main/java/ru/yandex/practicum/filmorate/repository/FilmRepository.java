@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.util.ExistChecker;
-import ru.yandex.practicum.filmorate.util.mappers.FilmRowMapper;
+import ru.yandex.practicum.filmorate.repository.util.ExistChecker;
+import ru.yandex.practicum.filmorate.repository.mapper.FilmRowMapper;
 
 import java.time.ZoneId;
 import java.util.*;

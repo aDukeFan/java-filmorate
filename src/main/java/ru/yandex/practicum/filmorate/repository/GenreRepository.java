@@ -6,8 +6,8 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.util.ExistChecker;
-import ru.yandex.practicum.filmorate.util.mappers.GenreRowMapper;
+import ru.yandex.practicum.filmorate.repository.util.ExistChecker;
+import ru.yandex.practicum.filmorate.repository.mapper.GenreRowMapper;
 
 import java.sql.PreparedStatement;
 import java.util.List;
