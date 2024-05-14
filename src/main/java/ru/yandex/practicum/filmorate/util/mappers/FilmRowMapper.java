@@ -16,7 +16,6 @@ import java.util.Set;
 @Component
 @AllArgsConstructor
 public class FilmRowMapper {
-
     private final JdbcTemplate template;
     private RatingRowMapper ratingRowMapper;
     private GenreRowMapper genreRowMapper;
@@ -44,13 +43,13 @@ public class FilmRowMapper {
 
     private Rating getRatingFromDb(int filmId) {
         return template.queryForObject("SELECT r.id, r.name " +
-                        "FROM ratings AS r " +
-                        "JOIN films AS f " +
-                        "ON f.rating_id = r.id " +
-                        "WHERE f.id = ?", ratingRowMapper.getMapper(), filmId);
+                "FROM ratings AS r " +
+                "JOIN films AS f " +
+                "ON f.rating_id = r.id " +
+                "WHERE f.id = ?", ratingRowMapper.getMapper(), filmId);
     }
 
-    private Set <Director> getDirectorsFromDb(int filmId) {
+    private Set<Director> getDirectorsFromDb(int filmId) {
         return new HashSet<>(template.query("SELECT d.id AS id, d.name AS name " +
                 "FROM directors AS d " +
                 "JOIN directors_films AS df " +
@@ -58,7 +57,7 @@ public class FilmRowMapper {
                 "WHERE df.film_id = ?", directorRowMapper.getMapper(), filmId));
     }
 
-    private Set <Genre> getGenresFromDb(int filmId) {
+    private Set<Genre> getGenresFromDb(int filmId) {
         return new LinkedHashSet<>(template.query("SELECT g.id AS id, g.name AS name " +
                 "FROM genres AS g " +
                 "JOIN genres_films AS gf " +
