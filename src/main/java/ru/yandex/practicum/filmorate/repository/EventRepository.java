@@ -1,15 +1,14 @@
-package ru.yandex.practicum.filmorate.util;
+package ru.yandex.practicum.filmorate.repository;
 
+import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CreatingEvents {
-    private final JdbcTemplate template;
+@AllArgsConstructor
+public class EventRepository {
 
-    public CreatingEvents(JdbcTemplate template) {
-        this.template = template;
-    }
+    private final JdbcTemplate template;
 
     public void addEvent(Integer userId, String eventType, Integer entityId, String operation) {
         template.update("INSERT INTO events " +

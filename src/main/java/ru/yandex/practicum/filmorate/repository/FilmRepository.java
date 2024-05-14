@@ -9,8 +9,6 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.Rating;
 import ru.yandex.practicum.filmorate.util.Checking;
-import ru.yandex.practicum.filmorate.util.CreatingEvents;
-import ru.yandex.practicum.filmorate.util.FilmSearchingHelper;
 import ru.yandex.practicum.filmorate.util.mappers.FilmRowMapper;
 
 import java.time.ZoneId;
@@ -25,8 +23,7 @@ public class FilmRepository {
     private JdbcTemplate template;
     private FilmRowMapper filmRowMapper;
     private Checking checking;
-    private CreatingEvents events;
-    private FilmSearchingHelper helper;
+    private EventRepository events;
 
     public Film create(Film film) {
         log.info("На сохранение поступил фильм: id {}, name {}, release {}",
@@ -214,24 +211,6 @@ public class FilmRepository {
         List<Film> directorFilms = new ArrayList<>();
         directorFilmIds.forEach(filmId -> directorFilms.add(getById(filmId)));
         return directorFilms;
-    }
-
-    public List<Film> getFilmsByDirectorOrTitle(String query, String param) {
-        switch (param) {
-            case "title":
-                return helper.searchFilmByTitle(query);
-            case "director": {
-                return helper.searchFilmByDirector(query);
-            }
-            case "title,director": {
-                List<Film> result = new ArrayList<>();
-                result.addAll(helper.searchFilmByDirector(query));
-                result.addAll(helper.searchFilmByTitle(query));
-                return result;
-            }
-            default:
-                return new ArrayList<>();
-        }
     }
 
     public void delFilmById(int filmId) {

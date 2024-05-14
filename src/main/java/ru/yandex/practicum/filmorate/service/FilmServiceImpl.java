@@ -3,11 +3,11 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.repository.FilmRepository;
 
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -93,8 +93,17 @@ public class FilmServiceImpl implements FilmService {
     }
 
     @Override
-    public List<Film> getFilmsByDirectorOrTitle(String query, String param) {
-        return filmRepository.getFilmsByDirectorOrTitle(query, param);
+    public List<Film> getFilmsByDirectorOrTitleByQuery(String query, String param) {
+        switch (param.toLowerCase()) {
+            case "director":
+                return getFilmsByDirectorQuery(query);
+            case "title":
+                return getFilmsByTitleQuery(query);
+            case "title,director":
+                return getFilmsByDirectorAndTitleQuery(query);
+            default:
+                return new ArrayList<>();
+        }
     }
 
     @Override
@@ -105,5 +114,36 @@ public class FilmServiceImpl implements FilmService {
     @Override
     public List<Film> getCommonFilms(int userId, int friendId) {
         return filmRepository.getCommonFilms(userId, friendId);
+    }
+
+    private List<Film> getFilmsByTitleQuery(String query) {
+        return filmRepository.findAll().stream()
+                .filter(film -> film.getName().toLowerCase().contains(query.toLowerCase()))
+                .collect(Collectors.toList());
+    }
+
+    private List<Film> getFilmsByDirectorQuery(String query) {
+        List<Film> filmsWithDirectors = findAll()
+                .stream()
+                .filter(film -> !film.getDirectors().isEmpty())
+                .collect(Collectors.toList());
+        Set<Film> setOfFilms = new LinkedHashSet<>();
+        for (Film film : filmsWithDirectors) {
+            for (Director director : film.getDirectors()) {
+                if (director.getName().toLowerCase().contains(query.toLowerCase())) {
+                    setOfFilms.add(film);
+                }
+            }
+        }
+        return new ArrayList<>(setOfFilms);
+    }
+
+    private List<Film> getFilmsByDirectorAndTitleQuery(String query) {
+        List<Film> matchDirectorFilms = getFilmsByDirectorQuery(query);
+        List<Film> matchTitleFilms = getFilmsByTitleQuery(query);
+        List<Film> result = new ArrayList<>();
+        result.addAll(matchDirectorFilms);
+        result.addAll(matchTitleFilms);
+        return result;
     }
 }

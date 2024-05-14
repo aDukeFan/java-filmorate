@@ -25,7 +25,7 @@ class RepositoryTest {
 
     @Test
     public void tests() {
-        FilmRepository repository = new FilmRepository(template, null, null, null, null);
+        FilmRepository repository = new FilmRepository(template, null, null, null);
         List<Film> filmsBeforeSaved = make3Films(repository);
         List<Film> savedFilms = repository.findAll();
         assertThat(savedFilms)
@@ -51,7 +51,11 @@ class RepositoryTest {
                 .isNotNull()
                 .usingRecursiveComparison()
                 .isEqualTo(film1toUpdate);
-        UserRepository userRepository = new UserRepository(template, null, null, null, null);
+        UserRepository userRepository = new UserRepository(template,
+                null,
+                null,
+                null,
+                null);
         List<User> usersBeforeSaved = make3Users(userRepository);
         repository.addLike(1, 1);
         repository.addLike(1, 2);
@@ -69,15 +73,6 @@ class RepositoryTest {
                 .isNotNull()
                 .usingRecursiveComparison()
                 .isEqualTo(likesToAdd);
-        List<Film> filmsWithLikes = new ArrayList<>();
-        filmsWithLikes.add(repository.getById(2));
-        filmsWithLikes.add(repository.getById(1));
-        filmsWithLikes.add(repository.getById(3));
-//        List<Film> savedFilmsWithLikes = repository.getTopPopularFilms(3, 0, 0);
-//        assertThat(savedFilmsWithLikes)
-//                .isNotNull()
-//                .usingRecursiveComparison()
-//                .isEqualTo(filmsWithLikes);
 
         User savedUser = userRepository.getById(1);
         User user1BeforeSaved = usersBeforeSaved.get(0);

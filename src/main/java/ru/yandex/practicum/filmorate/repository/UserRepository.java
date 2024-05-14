@@ -11,7 +11,6 @@ import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.util.Checking;
-import ru.yandex.practicum.filmorate.util.CreatingEvents;
 import ru.yandex.practicum.filmorate.util.mappers.FilmRowMapper;
 import ru.yandex.practicum.filmorate.util.mappers.UserRowMapper;
 
@@ -27,7 +26,7 @@ public class UserRepository {
     private JdbcTemplate template;
     private FilmRowMapper filmRowMapper;
     private UserRowMapper userRowMapper;
-    private CreatingEvents events;
+    private EventRepository events;
     private Checking checking;
 
     public User create(User user) {

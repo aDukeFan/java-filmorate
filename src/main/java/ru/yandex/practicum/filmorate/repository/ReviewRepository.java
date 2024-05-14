@@ -8,7 +8,6 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.util.Checking;
-import ru.yandex.practicum.filmorate.util.CreatingEvents;
 import ru.yandex.practicum.filmorate.util.mappers.ReviewRowMapper;
 
 import java.sql.PreparedStatement;
@@ -23,7 +22,7 @@ public class ReviewRepository {
     private JdbcTemplate template;
     private ReviewRowMapper reviewMapper;
     private Checking checking;
-    private CreatingEvents events;
+    private EventRepository events;
 
     public Review create(Review review) {
         log.info("на сохранение получен отзыв с userId: {} filmId: {}",
