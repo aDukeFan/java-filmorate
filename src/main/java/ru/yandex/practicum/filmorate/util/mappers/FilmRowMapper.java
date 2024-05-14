@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.util.mappers;
 import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -19,8 +18,11 @@ import java.util.Set;
 public class FilmRowMapper {
 
     private final JdbcTemplate template;
+    private RatingRowMapper ratingRowMapper;
+    private GenreRowMapper genreRowMapper;
+    private DirectorRowMapper directorRowMapper;
 
-    public RowMapper<Film> mapperWithAllParameters() {
+    public RowMapper<Film> getMapperWithAllParameters() {
         return ((rs, rowNum) ->
                 new Film()
                         .setId(rs.getInt("id"))
@@ -28,79 +30,39 @@ public class FilmRowMapper {
                         .setDescription(rs.getString("description"))
                         .setReleaseDate(rs.getDate("release").toLocalDate())
                         .setDuration(rs.getInt("duration"))
-                        .setLikes(setLikesUsersFromDb(rs.getInt("id")))
-                        .setGenres(setGenresFromDb(rs.getInt("id")))
-                        .setMpa(setRatingFromDb(rs.getInt("id")))
-                        .setDirectors(setDirectorsFromDb(rs.getInt("id"))));
+                        .setLikes(getLikesUsersFromDb(rs.getInt("id")))
+                        .setGenres(getGenresFromDb(rs.getInt("id")))
+                        .setMpa(getRatingFromDb(rs.getInt("id")))
+                        .setDirectors(getDirectorsFromDb(rs.getInt("id"))));
     }
 
-    private Set<Integer> setLikesUsersFromDb(int filmId) {
-        Set<Integer> likes = new LinkedHashSet<>();
-        SqlRowSet sqlRowSet = template.queryForRowSet(
-                "SELECT user_id " +
-                        "FROM likes " +
-                        "WHERE film_id = ?",
-                filmId);
-        while (sqlRowSet.next()) {
-            likes.add(sqlRowSet.getInt("user_id"));
-        }
-        return likes;
+    private Set<Integer> getLikesUsersFromDb(int filmId) {
+        return new HashSet<>(template.queryForList("SELECT user_id " +
+                "FROM likes " +
+                "WHERE film_id = ?", Integer.class, filmId));
     }
 
-    private Set<Genre> setGenresFromDb(int filmId) {
-        Set<Genre> genres = new LinkedHashSet<>();
-        SqlRowSet sqlRowSet = template.queryForRowSet(
-                "SELECT * " +
-                        "FROM genres " +
-                        "WHERE id IN " +
-                        "(SELECT genre_id " +
-                        "FROM genres_films " +
-                        "WHERE film_id = ?)",
-                filmId);
-        while (sqlRowSet.next()) {
-            genres.add(
-                    new Genre()
-                            .setId(sqlRowSet.getInt("id"))
-                            .setName(sqlRowSet.getString("name")));
-        }
-        return genres;
+    private Rating getRatingFromDb(int filmId) {
+        return template.queryForObject("SELECT r.id, r.name " +
+                        "FROM ratings AS r " +
+                        "JOIN films AS f " +
+                        "ON f.rating_id = r.id " +
+                        "WHERE f.id = ?", ratingRowMapper.getMapper(), filmId);
     }
 
-    private Rating setRatingFromDb(int filmId) {
-        return template.queryForObject(
-                "SELECT * " +
-                        "FROM ratings " +
-                        "WHERE id = (" +
-                        "SELECT rating_id " +
-                        "FROM films " +
-                        "WHERE id = ?)",
-                mpaRowMapper(),
-                filmId);
+    private Set <Director> getDirectorsFromDb(int filmId) {
+        return new HashSet<>(template.query("SELECT d.id AS id, d.name AS name " +
+                "FROM directors AS d " +
+                "JOIN directors_films AS df " +
+                "ON df.director_id = d.id " +
+                "WHERE df.film_id = ?", directorRowMapper.getMapper(), filmId));
     }
 
-    private RowMapper<Rating> mpaRowMapper() {
-        return ((rs, rowNum) ->
-                new Rating()
-                        .setId(rs.getInt("id"))
-                        .setName(rs.getString("name")));
-    }
-
-    private Set<Director> setDirectorsFromDb(int filmId) {
-        Set<Director> directors = new HashSet<>();
-        SqlRowSet sqlRowSet = template.queryForRowSet(
-                "SELECT * " +
-                        "FROM directors " +
-                        "WHERE id IN " +
-                        "(SELECT director_id " +
-                        "FROM directors_films " +
-                        "WHERE film_id = ?)",
-                filmId);
-        while (sqlRowSet.next()) {
-            directors.add(
-                    new Director()
-                            .setId(sqlRowSet.getInt("id"))
-                            .setName(sqlRowSet.getString("name")));
-        }
-        return directors;
+    private Set <Genre> getGenresFromDb(int filmId) {
+        return new LinkedHashSet<>(template.query("SELECT g.id AS id, g.name AS name " +
+                "FROM genres AS g " +
+                "JOIN genres_films AS gf " +
+                "ON gf.genre_id = g.id " +
+                "WHERE gf.film_id = ?", genreRowMapper.getMapper(), filmId));
     }
 }

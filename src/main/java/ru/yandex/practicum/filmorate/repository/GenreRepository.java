@@ -6,7 +6,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.util.Checking;
+import ru.yandex.practicum.filmorate.util.ExistChecker;
 import ru.yandex.practicum.filmorate.util.mappers.GenreRowMapper;
 
 import java.sql.PreparedStatement;
@@ -19,7 +19,7 @@ public class GenreRepository {
 
     private JdbcTemplate template;
     private GenreRowMapper genreRowMapper;
-    private Checking checking;
+    private ExistChecker existChecker;
 
     public Genre create(Genre genre) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -34,7 +34,7 @@ public class GenreRepository {
     }
 
     public Genre update(Genre genre) {
-        checking.exist(genre.getId(), "genres");
+        existChecker.throwNotFountException(genre.getId(), "genres");
         template.update(
                 "update genres set name = ? where id = ?",
                 genre.getName(), genre.getId());
@@ -42,18 +42,18 @@ public class GenreRepository {
     }
 
     public Genre getById(int genreId) {
-        checking.exist(genreId, "genres");
+        existChecker.throwNotFountException(genreId, "genres");
         return template.queryForObject(
-                "select * from genres where id = ?", genreRowMapper.mapper(),
+                "select * from genres where id = ?", genreRowMapper.getMapper(),
                 genreId);
     }
 
     public List<Genre> getAll() {
-        return template.query("select * from genres order by id asc", genreRowMapper.mapper());
+        return template.query("select * from genres order by id asc", genreRowMapper.getMapper());
     }
 
     public void removeById(int genreId) {
-        checking.exist(genreId, "genres");
+        existChecker.throwNotFountException(genreId, "genres");
         template.update("delete from genres where id = ?", genreId);
     }
 }

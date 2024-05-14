@@ -7,7 +7,7 @@ import ru.yandex.practicum.filmorate.model.Director;
 @Component
 public class DirectorRowMapper {
 
-    public RowMapper<Director> mapper() {
+    public RowMapper<Director> getMapper() {
         return (rs, rowNum) -> new Director()
                 .setId(rs.getInt("id"))
                 .setName(rs.getString("name"));

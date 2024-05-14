@@ -7,7 +7,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Director;
-import ru.yandex.practicum.filmorate.util.Checking;
+import ru.yandex.practicum.filmorate.util.ExistChecker;
 import ru.yandex.practicum.filmorate.util.mappers.DirectorRowMapper;
 
 import java.sql.PreparedStatement;
@@ -21,7 +21,7 @@ public class DirectorRepository {
 
     private JdbcTemplate template;
     private DirectorRowMapper directorRowMapper;
-    private Checking checking;
+    private ExistChecker existChecker;
 
     public Director create(Director director) {
         log.info("Директор с именем: {} - получен на сохранение", director.getName());
@@ -39,7 +39,7 @@ public class DirectorRepository {
     }
 
     public Director update(Director director) {
-        checking.exist(director.getId(), "directors");
+        existChecker.throwNotFountException(director.getId(), "directors");
         template.update(
                 "update directors set name = ? where id = ?",
                 director.getName(), director.getId());
@@ -48,19 +48,19 @@ public class DirectorRepository {
     }
 
     public Director getById(Integer id) {
-        checking.exist(id, "directors");
+        existChecker.throwNotFountException(id, "directors");
         return template.queryForObject(
                 "select * from directors where id = ?",
-                directorRowMapper.mapper(), id);
+                directorRowMapper.getMapper(), id);
     }
 
     public List<Director> getAll() {
         return template.query("select * from directors order by id asc",
-                directorRowMapper.mapper());
+                directorRowMapper.getMapper());
     }
 
     public void removeById(Integer id) {
-        checking.exist(id, "directors");
+        existChecker.throwNotFountException(id, "directors");
         template.update("delete from directors where id = ?", id);
         log.info("Директор с id {} удален", id);
     }

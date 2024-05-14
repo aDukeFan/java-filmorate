@@ -7,7 +7,7 @@ import ru.yandex.practicum.filmorate.model.Review;
 @Component
 public class ReviewRowMapper {
 
-    public RowMapper<Review> mapper() {
+    public RowMapper<Review> getMapper() {
         return (rs, rowNum) -> new Review()
                 .setReviewId(rs.getInt("id"))
                 .setContent(rs.getString("content"))

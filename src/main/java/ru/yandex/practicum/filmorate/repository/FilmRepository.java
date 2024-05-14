@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.util.Checking;
+import ru.yandex.practicum.filmorate.util.ExistChecker;
 import ru.yandex.practicum.filmorate.util.mappers.FilmRowMapper;
 
 import java.time.ZoneId;
@@ -21,7 +21,7 @@ public class FilmRepository {
 
     private JdbcTemplate template;
     private FilmRowMapper filmRowMapper;
-    private Checking checking;
+    private ExistChecker existChecker;
     private EventRepository events;
 
     public Film create(Film film) {
@@ -39,7 +39,7 @@ public class FilmRepository {
         log.info("saved film without rating and genres to table 'films'");
         if (film.getMpa() != null) {
             Integer ratingId = film.getMpa().getId();
-            checking.valid(ratingId, "ratings");
+            existChecker.throwValidationException(ratingId, "ratings");
             String ratingName = template.queryForObject(
                     "select name from ratings where id = ?",
                     (rs, rowNum) -> rs.getString("name"), ratingId);
@@ -51,7 +51,7 @@ public class FilmRepository {
         }
         Set<Genre> genres = film.getGenres();
         if (!genres.isEmpty()) {
-            genres.forEach(genre -> checking.valid(genre.getId(), "genres"));
+            genres.forEach(genre -> existChecker.throwValidationException(genre.getId(), "genres"));
             genres.forEach(genre -> genre.setName(template.queryForObject(
                     "select name from genres where id = ?",
                     (rs, rowNum) -> rs.getString("name"), genre.getId())));
@@ -63,7 +63,7 @@ public class FilmRepository {
 
         Set<Director> directors = film.getDirectors();
         if (!directors.isEmpty()) {
-            directors.forEach(director -> checking.exist(director.getId(), "directors"));
+            directors.forEach(director -> existChecker.throwNotFountException(director.getId(), "directors"));
             directors.forEach(director -> template.update(
                     "insert into directors_films (director_id, film_id) values (?, ?)",
                     director.getId(), film.getId()));
@@ -76,7 +76,7 @@ public class FilmRepository {
     }
 
     public Film update(Film film) {
-        checking.exist(film.getId(), "films");
+        existChecker.throwNotFountException(film.getId(), "films");
         template.update(
                 "update films set name = ?, description = ?, release = ?, duration = ? where id = ?",
                 film.getName(),
@@ -86,7 +86,7 @@ public class FilmRepository {
                 film.getId());
         log.info("update film's: name, description, release, duration in table 'films'");
         if (film.getMpa() != null) {
-            checking.exist(film.getMpa().getId(), "ratings");
+            existChecker.throwNotFountException(film.getMpa().getId(), "ratings");
             template.update(
                     "update films set rating_id = ? where id = ?",
                     film.getMpa().getId(), film.getId());
@@ -101,7 +101,7 @@ public class FilmRepository {
 
         template.update("delete from genres_films where film_id = ?", film.getId());
         if (!genres.isEmpty()) {
-            genres.forEach(genre -> checking.valid(genre.getId(), "genres"));
+            genres.forEach(genre -> existChecker.throwValidationException(genre.getId(), "genres"));
             genres.forEach(genre -> template.update(
                     "insert into genres_films (genre_id, film_id) values (?, ?)",
                     genre.getId(), film.getId()));
@@ -113,7 +113,7 @@ public class FilmRepository {
 
         template.update("delete from directors_films where film_id = ?", film.getId());
         if (!directors.isEmpty()) {
-            directors.forEach(director -> checking.exist(director.getId(), "directors"));
+            directors.forEach(director -> existChecker.throwNotFountException(director.getId(), "directors"));
             directors.forEach(director -> template.update(
                     "insert into directors_films (director_id, film_id) values (?, ?)",
                     director.getId(), film.getId()));
@@ -126,20 +126,20 @@ public class FilmRepository {
     }
 
     public Film getById(Integer filmId) {
-        checking.exist(filmId, "films");
+        existChecker.throwNotFountException(filmId, "films");
         log.info("show film '{}'", filmId);
         return template.queryForObject("select * from films where id = ?",
-                filmRowMapper.mapperWithAllParameters(), filmId);
+                filmRowMapper.getMapperWithAllParameters(), filmId);
     }
 
     public List<Film> findAll() {
         return template.query("select * from films order by id asc",
-                filmRowMapper.mapperWithAllParameters());
+                filmRowMapper.getMapperWithAllParameters());
     }
 
     public Film addLike(Integer filmId, Integer userId) {
-        checking.exist(filmId, "films");
-        checking.exist(userId, "users");
+        existChecker.throwNotFountException(filmId, "films");
+        existChecker.throwNotFountException(userId, "users");
         template.update("insert into likes (film_id, user_id) values(?, ?)", filmId, userId);
         log.info("add user's '{}' like to film with '{}'", userId, filmId);
         events.addEvent(userId, "LIKE", filmId, "ADD");
@@ -147,8 +147,8 @@ public class FilmRepository {
     }
 
     public Film removeLike(Integer filmId, Integer userId) {
-        checking.exist(filmId, "films");
-        checking.exist(userId, "users");
+        existChecker.throwNotFountException(filmId, "films");
+        existChecker.throwNotFountException(userId, "users");
         template.update("delete from likes where film_id = ? and user_id = ?", filmId, userId);
         log.info("remove user's '{}' like from film '{}'", userId, filmId);
         events.addEvent(userId, "LIKE", filmId, "REMOVE");
@@ -156,7 +156,7 @@ public class FilmRepository {
     }
 
     public List<Film> getFilmsByDirector(int id) {
-        checking.exist(id, "directors");
+        existChecker.throwNotFountException(id, "directors");
         List<Integer> directorFilmIds = template.query(
                 "select film_id as id from directors_films where director_id = ?",
                 (rs, rowNum) -> rs.getInt("id"), id);

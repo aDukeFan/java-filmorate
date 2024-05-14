@@ -1,36 +1,21 @@
 package ru.yandex.practicum.filmorate.util.mappers;
 
+import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.util.LinkedHashSet;
+import java.util.HashSet;
 import java.util.Set;
 
 @Component
+@AllArgsConstructor
 public class UserRowMapper {
 
     private final JdbcTemplate template;
 
-    public UserRowMapper(JdbcTemplate template) {
-        this.template = template;
-    }
-
-    private Set<Integer> setFriendsListFromDb(int id) {
-        Set<Integer> friends = new LinkedHashSet<>();
-        SqlRowSet sqlRowSet = template.queryForRowSet(
-                "select following_id " +
-                        "from follows " +
-                        "where followed_id = ?", id);
-        while (sqlRowSet.next()) {
-            friends.add(sqlRowSet.getInt("following_id"));
-        }
-        return friends;
-    }
-
-    public RowMapper<User> mapper() {
+    public RowMapper<User> getMapperWithFriendsSet() {
         return ((rs, rowNum) ->
                 new User()
                         .setId(rs.getInt("id"))
@@ -38,6 +23,12 @@ public class UserRowMapper {
                         .setEmail(rs.getString("email"))
                         .setLogin(rs.getString("login"))
                         .setBirthday(rs.getDate("birthday").toLocalDate())
-                        .setFriends(setFriendsListFromDb(rs.getInt("id"))));
+                        .setFriends(getFriendsSetFromDb(rs.getInt("id"))));
+    }
+
+    private Set<Integer> getFriendsSetFromDb(int id) {
+        return new HashSet<>(template.queryForList("SELECT following_id " +
+                "FROM follows " +
+                "WHERE followed_id = ?", Integer.class, id));
     }
 }

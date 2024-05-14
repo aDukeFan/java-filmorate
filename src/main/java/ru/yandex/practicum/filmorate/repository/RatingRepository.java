@@ -6,7 +6,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Rating;
-import ru.yandex.practicum.filmorate.util.Checking;
+import ru.yandex.practicum.filmorate.util.ExistChecker;
 import ru.yandex.practicum.filmorate.util.mappers.RatingRowMapper;
 
 import java.sql.PreparedStatement;
@@ -19,7 +19,7 @@ public class RatingRepository {
 
     private JdbcTemplate template;
     private RatingRowMapper ratingRowMapper;
-    private Checking checking;
+    private ExistChecker existChecker;
 
     public Rating create(Rating rating) {
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -34,7 +34,7 @@ public class RatingRepository {
     }
 
     public Rating update(Rating rating) {
-        checking.exist(rating.getId(), "ratings");
+        existChecker.throwNotFountException(rating.getId(), "ratings");
         template.update(
                 "update ratings set name = ? where id = ?",
                 rating.getName(), rating.getId());
@@ -42,18 +42,18 @@ public class RatingRepository {
     }
 
     public Rating getById(int ratingId) {
-        checking.exist(ratingId, "ratings");
+        existChecker.throwNotFountException(ratingId, "ratings");
         return template.queryForObject(
-                "select * from ratings where id = ?", ratingRowMapper.mapper(),
+                "select * from ratings where id = ?", ratingRowMapper.getMapper(),
                 ratingId);
     }
 
     public List<Rating> getAll() {
-        return template.query("select * from ratings order by id", ratingRowMapper.mapper());
+        return template.query("select * from ratings order by id", ratingRowMapper.getMapper());
     }
 
     public void removeById(int ratingId) {
-        checking.exist(ratingId, "ratings");
+        existChecker.throwNotFountException(ratingId, "ratings");
         template.update("delete from ratings where id = ?", ratingId);
     }
 }

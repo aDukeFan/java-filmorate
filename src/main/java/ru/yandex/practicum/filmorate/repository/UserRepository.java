@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.util.Checking;
+import ru.yandex.practicum.filmorate.util.ExistChecker;
 import ru.yandex.practicum.filmorate.util.mappers.FilmRowMapper;
 import ru.yandex.practicum.filmorate.util.mappers.UserRowMapper;
 
@@ -27,7 +27,7 @@ public class UserRepository {
     private FilmRowMapper filmRowMapper;
     private UserRowMapper userRowMapper;
     private EventRepository events;
-    private Checking checking;
+    private ExistChecker existChecker;
 
     public User create(User user) {
         if (user.getName().isEmpty()) {
@@ -48,7 +48,7 @@ public class UserRepository {
     }
 
     public User update(User user) {
-        checking.exist(user.getId(), "users");
+        existChecker.throwNotFountException(user.getId(), "users");
         template.update(
                 "update users set name = ?, login = ?, email = ?, birthday = ? where id = ?",
                 user.getName(), user.getLogin(), user.getEmail(), user.getBirthday(), user.getId());
@@ -58,18 +58,18 @@ public class UserRepository {
 
 
     public User getById(Integer id) {
-        checking.exist(id, "users");
-        return template.queryForObject("select * from users where id = ?", userRowMapper.mapper(), id);
+        existChecker.throwNotFountException(id, "users");
+        return template.queryForObject("select * from users where id = ?", userRowMapper.getMapperWithFriendsSet(), id);
     }
 
     public List<User> findAll() {
-        return template.query("select * from users order by id asc", userRowMapper.mapper());
+        return template.query("select * from users order by id asc", userRowMapper.getMapperWithFriendsSet());
     }
 
     public User addFollow(Integer userId, Integer friendId) {
-        checking.exist(userId, "users");
-        checking.exist(friendId, "users");
-        if (!checking.isFriends(userId, friendId)) {
+        existChecker.throwNotFountException(userId, "users");
+        existChecker.throwNotFountException(friendId, "users");
+        if (!isFriends(userId, friendId)) {
             template.update(
                     "insert into follows (following_id, followed_id) values(?, ?)",
                     friendId, userId);
@@ -80,9 +80,9 @@ public class UserRepository {
     }
 
     public User removeFollowing(Integer userId, Integer friendId) {
-        checking.exist(userId, "users");
-        checking.exist(friendId, "users");
-        if (checking.isFriends(userId, friendId)) {
+        existChecker.throwNotFountException(userId, "users");
+        existChecker.throwNotFountException(friendId, "users");
+        if (isFriends(userId, friendId)) {
             template.update(
                     "delete from follows where following_id = ? and followed_id = ?",
                     friendId, userId);
@@ -93,24 +93,24 @@ public class UserRepository {
     }
 
     public List<User> getSameFollowers(Integer userId, Integer friendId) {
-        checking.exist(userId, "users");
-        checking.exist(friendId, "users");
+        existChecker.throwNotFountException(userId, "users");
+        existChecker.throwNotFountException(friendId, "users");
         log.info("show same followers of user '{}' and user '{}'", userId, friendId);
         return template.query(
                 "select * from users as u " +
                         "join follows as f on f.following_id = u.id and f.followed_id = ? " +
                         "join follows as friend_f on friend_f.following_id = u.id and friend_f.followed_id = ?",
-                userRowMapper.mapper(),
+                userRowMapper.getMapperWithFriendsSet(),
                 friendId, userId);
     }
 
     public List<User> getFollowers(Integer userId) {
-        checking.exist(userId, "users");
+        existChecker.throwNotFountException(userId, "users");
         log.info("show followers of user '{}'", userId);
         return template.query(
                 "select * from users as u " +
                         "join follows as f on f.following_id = u.id and f.followed_id = ?",
-                userRowMapper.mapper(),
+                userRowMapper.getMapperWithFriendsSet(),
                 userId);
     }
 
@@ -151,7 +151,7 @@ public class UserRepository {
                             "from films " +
                             "where id IN " +
                             "(select * " +
-                            "from recommended_films)", filmRowMapper.mapperWithAllParameters());
+                            "from recommended_films)", filmRowMapper.getMapperWithAllParameters());
 
             template.execute("drop table if exists recommended_films");
 
@@ -161,13 +161,13 @@ public class UserRepository {
     }
 
     public void delUserById(int userId) {
-        checking.exist(userId, "users");
+        existChecker.throwNotFountException(userId, "users");
         template.update("DELETE FROM users WHERE id=?", userId);
         log.info("deleted user by id '{}'", userId);
     }
 
     public List<Event> getEventsByUserId(Integer id) {
-        checking.exist(id, "users");
+        existChecker.throwNotFountException(id, "users");
         SqlRowSet sqlRowSet = template.queryForRowSet("SELECT * FROM events WHERE user_id = ?", id);
         List<Event> events = new ArrayList<>();
         while (sqlRowSet.next()) {
@@ -185,5 +185,11 @@ public class UserRepository {
         }
         events.sort(Comparator.comparing(Event::getEventId));
         return events;
+    }
+
+    private boolean isFriends(int userId, int friendId) {
+        return Boolean.TRUE.equals(template.queryForObject(
+                "select exists (select * from follows where following_id = ? and followed_id = ?) as match",
+                (rs, rowNum) -> rs.getBoolean("match"), friendId, userId));
     }
 }

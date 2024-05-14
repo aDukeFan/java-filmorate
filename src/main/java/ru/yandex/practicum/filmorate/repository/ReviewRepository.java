@@ -7,7 +7,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Review;
-import ru.yandex.practicum.filmorate.util.Checking;
+import ru.yandex.practicum.filmorate.util.ExistChecker;
 import ru.yandex.practicum.filmorate.util.mappers.ReviewRowMapper;
 
 import java.sql.PreparedStatement;
@@ -21,15 +21,15 @@ public class ReviewRepository {
 
     private JdbcTemplate template;
     private ReviewRowMapper reviewMapper;
-    private Checking checking;
+    private ExistChecker existChecker;
     private EventRepository events;
 
     public Review create(Review review) {
         log.info("на сохранение получен отзыв с userId: {} filmId: {}",
                 review.getUserId(), review.getFilmId());
 
-        checking.exist(review.getUserId(), "users");
-        checking.exist(review.getFilmId(), "films");
+        existChecker.throwNotFountException(review.getUserId(), "users");
+        existChecker.throwNotFountException(review.getFilmId(), "films");
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
         template.update(connection -> {
@@ -50,7 +50,7 @@ public class ReviewRepository {
 
     public Review update(Review review) {
         Integer id = review.getReviewId();
-        checking.exist(id, "reviews");
+        existChecker.throwNotFountException(id, "reviews");
         Integer authorId = template.queryForObject(
                 "select user_id from reviews where id = ?",
                 Integer.class,
@@ -65,7 +65,7 @@ public class ReviewRepository {
     }
 
     public void delete(Integer id) {
-        checking.exist(id, "reviews");
+        existChecker.throwNotFountException(id, "reviews");
         Integer authorId = template.queryForObject(
                 "select user_id from reviews where id = ?",
                 Integer.class, id);
@@ -76,7 +76,7 @@ public class ReviewRepository {
     }
 
     public Review getReviewById(Integer id) {
-        checking.exist(id, "reviews");
+        existChecker.throwNotFountException(id, "reviews");
         return template.queryForObject("SELECT " +
                         "r.id AS id, " +
                         "r.content AS content, " +
@@ -87,11 +87,11 @@ public class ReviewRepository {
                         "FROM reviews AS r " +
                         "LEFT JOIN reviews_rates AS rr ON rr.review_id = r.id " +
                         "WHERE r.id = ?",
-                reviewMapper.mapper(), id);
+                reviewMapper.getMapper(), id);
     }
 
     public List<Review> getAllReviewsByFilmIdAndCount(Integer filmId, Integer count) {
-        checking.exist(filmId, "films");
+        existChecker.throwNotFountException(filmId, "films");
         return template.query("SELECT " +
                         "r.id AS id, " +
                         "r.content AS content, " +
@@ -105,7 +105,7 @@ public class ReviewRepository {
                         "GROUP BY id " +
                         "ORDER BY useful DESC " +
                         "LIMIT (?)",
-                reviewMapper.mapper(), filmId, count);
+                reviewMapper.getMapper(), filmId, count);
     }
 
     public List<Review> getAllReviewsByCount(int count) {
@@ -120,7 +120,7 @@ public class ReviewRepository {
                         "LEFT JOIN reviews_rates AS rr ON rr.review_id = r.id " +
                         "GROUP BY id " +
                         "LIMIT (?)",
-                reviewMapper.mapper(), count);
+                reviewMapper.getMapper(), count);
     }
 
     public void addLikeReview(Integer id, Integer userId) {
