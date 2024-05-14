@@ -6,7 +6,9 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.repository.FilmRepository;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -48,12 +50,46 @@ public class FilmServiceImpl implements FilmService {
 
     @Override
     public List<Film> getTopPopularFilms(int count, int genreId, int year) {
-        return filmRepository.getTopPopularFilms(count, genreId, year);
+        List<Film> top = filmRepository.findAll().stream()
+                .sorted((o1, o2) -> o2.getLikes().size() - o1.getLikes().size())
+                .limit(count)
+                .collect(Collectors.toList());
+
+        if (genreId != 0 || year != 0) {
+            return top.stream()
+                    .filter(film -> {
+                        if (genreId != 0) {
+                            return film.getGenres().stream().anyMatch(genre -> genre.getId() == genreId);
+                        } else {
+                            return true;
+                        }
+                    })
+                    .filter(film -> {
+                        if (year != 0) {
+                            return film.getReleaseDate().getYear() == year;
+                        } else {
+                            return true;
+                        }
+                    })
+                    .collect(Collectors.toList());
+        }
+        return top;
     }
 
     @Override
     public List<Film> getFilmsByDirector(int id, String typeOfSort) {
-        return filmRepository.getFilmsByDirector(id, typeOfSort);
+        switch (typeOfSort) {
+            case "year":
+                return filmRepository.getFilmsByDirector(id).stream()
+                    .sorted(Comparator.comparing(Film::getReleaseDate))
+                    .collect(Collectors.toList());
+            case "likes":
+                return filmRepository.getFilmsByDirector(id).stream()
+                        .sorted(Comparator.comparingInt(o -> o.getLikes().size()))
+                        .collect(Collectors.toList());
+            default:
+                return filmRepository.getFilmsByDirector(id);
+        }
     }
 
     @Override

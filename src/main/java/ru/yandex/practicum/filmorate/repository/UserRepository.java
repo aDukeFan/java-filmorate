@@ -98,9 +98,9 @@ public class UserRepository {
         checking.exist(friendId, "users");
         log.info("show same followers of user '{}' and user '{}'", userId, friendId);
         return template.query(
-                "select * from users where id IN(" +
-                        "select following_id from follows where followed_id = ? and following_id in (" +
-                        "select following_id from follows where followed_id = ?))",
+                "select * from users as u " +
+                        "join follows as f on f.following_id = u.id and f.followed_id = ? " +
+                        "join follows as friend_f on friend_f.following_id = u.id and friend_f.followed_id = ?",
                 userRowMapper.mapper(),
                 friendId, userId);
     }
@@ -109,8 +109,8 @@ public class UserRepository {
         checking.exist(userId, "users");
         log.info("show followers of user '{}'", userId);
         return template.query(
-                "select * from users where id in (" +
-                        "select distinct following_id from follows where followed_id = ?)",
+                "select * from users as u " +
+                        "join follows as f on f.following_id = u.id and f.followed_id = ?",
                 userRowMapper.mapper(),
                 userId);
     }

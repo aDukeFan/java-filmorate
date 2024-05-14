@@ -33,7 +33,8 @@ public class DirectorRepository {
             stmt.setString(1, director.getName());
             return stmt;
         }, keyHolder);
-        log.info("Директор с именем: {} - получил id {} и сохранен", director.getName(), director.getId());
+        log.info("Директор с именем: {} - получил id {} и сохранен",
+                director.getName(), director.getId());
         return director.setId(Objects.requireNonNull(keyHolder.getKey()).intValue());
     }
 
@@ -49,18 +50,17 @@ public class DirectorRepository {
     public Director getById(Integer id) {
         checking.exist(id, "directors");
         return template.queryForObject(
-                "select * from directors where id = ?", directorRowMapper.mapper(),
-                id);
+                "select * from directors where id = ?",
+                directorRowMapper.mapper(), id);
     }
 
     public List<Director> getAll() {
-        return template.query("select * from directors order by id asc", directorRowMapper.mapper());
+        return template.query("select * from directors order by id asc",
+                directorRowMapper.mapper());
     }
 
     public void removeById(Integer id) {
         checking.exist(id, "directors");
-        template.update("delete from directors_films where director_id = ?", id);
-        log.info("Директор с id {} исключен из фильмов", id);
         template.update("delete from directors where id = ?", id);
         log.info("Директор с id {} удален", id);
     }

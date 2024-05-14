@@ -206,51 +206,14 @@ public class FilmRepository {
         return getById(filmId);
     }
 
-    public List<Film> getTopPopularFilms(int count, int genreId, int year) {
-        List<Film> top = findAll().stream()
-                .sorted((o1, o2) -> o2.getLikes().size() - o1.getLikes().size())
-                .limit(count)
-                .collect(Collectors.toList());
-
-        if (genreId != 0 || year != 0) {
-            return top.stream()
-                    .filter(film -> {
-                        if (genreId != 0) {
-                            return film.getGenres().stream().anyMatch(genre -> genre.getId() == genreId);
-                        } else {
-                            return true;
-                        }
-                    })
-                    .filter(film -> {
-                        if (year != 0) {
-                            return film.getReleaseDate().getYear() == year;
-                        } else {
-                            return true;
-                        }
-                    })
-                    .collect(Collectors.toList());
-        }
-        return top;
-    }
-
-    public List<Film> getFilmsByDirector(int id, String sortBy) {
+    public List<Film> getFilmsByDirector(int id) {
         checking.exist(id, "directors");
         List<Integer> directorFilmIds = template.query(
                 "select film_id as id from directors_films where director_id = ?",
                 (rs, rowNum) -> rs.getInt("id"), id);
         List<Film> directorFilms = new ArrayList<>();
         directorFilmIds.forEach(filmId -> directorFilms.add(getById(filmId)));
-        if (sortBy.equals("year")) {
-            return directorFilms.stream()
-                    .sorted(Comparator.comparing(Film::getReleaseDate))
-                    .collect(Collectors.toList());
-        } else if (sortBy.equals("likes")) {
-            return directorFilms.stream()
-                    .sorted(Comparator.comparingInt(o -> o.getLikes().size()))
-                    .collect(Collectors.toList());
-        } else {
-            return directorFilms;
-        }
+        return directorFilms;
     }
 
     public List<Film> getFilmsByDirectorOrTitle(String query, String param) {
@@ -277,14 +240,13 @@ public class FilmRepository {
     }
 
     public List<Film> getCommonFilms(int userId, int friendId) {
-        String sql = "SELECT film_id " +
-                "FROM likes " +
-                "WHERE user_id IN (?, ?) " +
-                "GROUP BY film_id " +
-                "HAVING COUNT(DISTINCT user_id) = 2 " +
-                "ORDER BY COUNT(*) DESC";
-
-        return template.query(sql, (rs, rowNum) -> rs.getInt("film_id"), userId, friendId)
+        return template.query("SELECT film_id " +
+                                "FROM likes " +
+                                "WHERE user_id IN (?, ?) " +
+                                "GROUP BY film_id " +
+                                "HAVING COUNT(DISTINCT user_id) = 2 " +
+                                "ORDER BY COUNT(*) DESC",
+                        (rs, rowNum) -> rs.getInt("film_id"), userId, friendId)
                 .stream()
                 .map(this::getById)
                 .collect(Collectors.toList());
