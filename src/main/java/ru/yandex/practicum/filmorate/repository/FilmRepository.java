@@ -34,15 +34,13 @@ public class FilmRepository {
                 Date.from(film.getReleaseDate().atStartOfDay(ZoneId.systemDefault()).toInstant()),
                 film.getDuration());
         film.setId(template.queryForObject(
-                "select max(id) as max from films",
-                (rs, rowNum) -> rs.getInt("max")));
+                "select max(id) as max from films", Integer.class));
         log.info("saved film without rating and genres to table 'films'");
         if (film.getMpa() != null) {
             Integer ratingId = film.getMpa().getId();
             existChecker.throwValidationException(ratingId, "ratings");
             String ratingName = template.queryForObject(
-                    "select name from ratings where id = ?",
-                    (rs, rowNum) -> rs.getString("name"), ratingId);
+                    "select name from ratings where id = ?", String.class, ratingId);
             film.getMpa().setName(ratingName);
             template.update(
                     "update films set rating_id = ? where id = ?",
@@ -53,8 +51,7 @@ public class FilmRepository {
         if (!genres.isEmpty()) {
             genres.forEach(genre -> existChecker.throwValidationException(genre.getId(), "genres"));
             genres.forEach(genre -> genre.setName(template.queryForObject(
-                    "select name from genres where id = ?",
-                    (rs, rowNum) -> rs.getString("name"), genre.getId())));
+                    "select name from genres where id = ?", String.class, genre.getId())));
             genres.forEach(genre -> template.update(
                     "insert into genres_films (genre_id, film_id) values (?, ?)",
                     genre.getId(), film.getId()));
@@ -68,8 +65,7 @@ public class FilmRepository {
                     "insert into directors_films (director_id, film_id) values (?, ?)",
                     director.getId(), film.getId()));
             directors.forEach(director -> director.setName(template.queryForObject(
-                    "select name from directors where id = ?",
-                    (rs, rowNum) -> rs.getString("name"), director.getId())));
+                    "select name from directors where id = ?", String.class, director.getId())));
         }
         log.info("Фильм с получил: id {} (name {}, release {})", film.getId(), film.getName(), film.getReleaseDate());
         return film;
@@ -91,8 +87,7 @@ public class FilmRepository {
                     "update films set rating_id = ? where id = ?",
                     film.getMpa().getId(), film.getId());
             String ratingName = template.queryForObject(
-                    "select name from ratings where id = ?",
-                    (rs, rowNum) -> rs.getString("name"), film.getMpa().getId());
+                    "select name from ratings where id = ?", String.class, film.getMpa().getId());
             film.getMpa().setName(ratingName);
             log.info("update film's mpa in table 'films'");
         }
@@ -106,8 +101,7 @@ public class FilmRepository {
                     "insert into genres_films (genre_id, film_id) values (?, ?)",
                     genre.getId(), film.getId()));
             genres.forEach(genre -> genre.setName(template.queryForObject(
-                    "select name from genres where id = ?",
-                    (rs, rowNum) -> rs.getString("name"), genre.getId())));
+                    "select name from genres where id = ?", String.class, genre.getId())));
             log.info("update film's genres in table 'genres_films'");
         }
 
@@ -118,8 +112,7 @@ public class FilmRepository {
                     "insert into directors_films (director_id, film_id) values (?, ?)",
                     director.getId(), film.getId()));
             directors.forEach(director -> director.setName(template.queryForObject(
-                    "select name from directors where id = ?",
-                    (rs, rowNum) -> rs.getString("name"), director.getId())));
+                    "select name from directors where id = ?", String.class, director.getId())));
             log.info("update film's directors in table 'directors_films'");
         }
         return film;
@@ -157,9 +150,9 @@ public class FilmRepository {
 
     public List<Film> getFilmsByDirector(int id) {
         existChecker.throwNotFountException(id, "directors");
-        List<Integer> directorFilmIds = template.query(
+        List<Integer> directorFilmIds = template.queryForList(
                 "select film_id as id from directors_films where director_id = ?",
-                (rs, rowNum) -> rs.getInt("id"), id);
+                Integer.class, id);
         List<Film> directorFilms = new ArrayList<>();
         directorFilmIds.forEach(filmId -> directorFilms.add(getById(filmId)));
         return directorFilms;
