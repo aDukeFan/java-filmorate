@@ -3,11 +3,12 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.repository.FilmRepository;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -123,20 +124,11 @@ public class FilmServiceImpl implements FilmService {
     }
 
     private List<Film> getFilmsByDirectorQuery(String query) {
-        List<Film> filmsWithDirectors = findAll()
-                .stream()
-                .filter(film -> !film.getDirectors().isEmpty())
-                .collect(Collectors.toList());
-        Set<Film> setOfFilms = new LinkedHashSet<>();
-        for (Film film : filmsWithDirectors) {
-            for (Director director : film.getDirectors()) {
-                if (director.getName().toLowerCase().contains(query.toLowerCase())) {
-                    setOfFilms.add(film);
-                }
-            }
+            return findAll().stream()
+                    .filter(film -> film.getDirectors().stream()
+                            .anyMatch(director -> director.getName().toLowerCase().contains(query.toLowerCase())))
+                    .collect(Collectors.toList());
         }
-        return new ArrayList<>(setOfFilms);
-    }
 
     private List<Film> getFilmsByDirectorAndTitleQuery(String query) {
         List<Film> matchDirectorFilms = getFilmsByDirectorQuery(query);
