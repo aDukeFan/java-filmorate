@@ -19,10 +19,4 @@ public class ErrorHandler {
     public ErrorResponse handleValidation(final ValidationException exception) {
         return new ErrorResponse(exception.getMessage());
     }
-
-    @ExceptionHandler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponse handleRepeat(final RepeatException exception) {
-        return new ErrorResponse(exception.getMessage());
-    }
 }

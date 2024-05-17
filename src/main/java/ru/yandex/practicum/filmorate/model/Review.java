@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -7,41 +8,36 @@ import lombok.ToString;
 import lombok.experimental.Accessors;
 import lombok.experimental.FieldDefaults;
 
-import javax.validation.constraints.*;
-import java.time.LocalDate;
-import java.util.LinkedHashSet;
+import javax.validation.constraints.NotNull;
 import java.util.Objects;
-import java.util.Set;
 
-@ToString
 @Getter
 @Setter
+@ToString
 @Accessors(chain = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class User {
-    Integer id;
-    String name;
+public class Review {
+    Integer reviewId;
     @NotNull
-    @Email
-    String email;
-    @NotEmpty
+    String content;
     @NotNull
-    @Pattern(regexp = "^[A-Za-z0-9]*$")
-    String login;
-    @Past
-    LocalDate birthday;
-    Set<Integer> friends = new LinkedHashSet<>();
+    Boolean isPositive;
+    @NotNull
+    Integer userId;
+    @NotNull
+    Integer filmId;
+    int useful = 0;
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
-        return Objects.equals(id, user.id);
+        Review review = (Review) o;
+        return Objects.equals(reviewId, review.reviewId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(reviewId);
     }
 }

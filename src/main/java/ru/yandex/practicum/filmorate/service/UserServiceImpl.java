@@ -2,6 +2,8 @@ package ru.yandex.practicum.filmorate.service;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.model.Event;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.repository.UserRepository;
 
@@ -53,4 +55,18 @@ public class UserServiceImpl implements UserService {
         return repository.getFollowers(userId);
     }
 
+    @Override
+    public void delUserById(int userId) {
+         repository.delUserById(userId);
+    }
+
+    @Override
+    public List<Film> getRecommendFilms(int userId) {
+        return repository.getRecommendations(userId);
+    }
+
+    @Override
+    public List<Event> getEventsByUserId(Integer id) {
+        return repository.getEventsByUserId(id);
+    }
 }
