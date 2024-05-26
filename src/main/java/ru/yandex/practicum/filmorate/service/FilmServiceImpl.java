@@ -117,6 +117,21 @@ public class FilmServiceImpl implements FilmService {
         return filmRepository.getCommonFilms(userId, friendId);
     }
 
+    @Override
+    public Film addGrade(int filmId, int userId, int grade) {
+        return null;
+    }
+
+    @Override
+    public Film removeGrade(int filmId, int userId, int grade) {
+        return null;
+    }
+
+    @Override
+    public Film updateGrade(int filmId, int userId, int grade) {
+        return null;
+    }
+
     private List<Film> getFilmsByTitleQuery(String query) {
         return filmRepository.findAll().stream()
                 .filter(film -> film.getName().toLowerCase().contains(query.toLowerCase()))

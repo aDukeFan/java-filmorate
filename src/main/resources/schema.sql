@@ -78,3 +78,9 @@ event_type varchar(30) not null,
 operation varchar(30) not null,
 entity_id integer not null
 );
+
+create table if not exists grades (
+  film_id integer not null references films(id) on delete cascade,
+  user_id integer not null references users(id) on delete cascade,
+  grade_value integer not null
+);

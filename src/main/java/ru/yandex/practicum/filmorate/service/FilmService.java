@@ -26,4 +26,10 @@ public interface FilmService {
     void delFilmById(int filmId);
 
     List<Film> getCommonFilms(int userId, int friendId);
+
+    Film addGrade(int filmId, int userId, int grade);
+
+    Film removeGrade(int filmId, int userId, int grade);
+
+    Film updateGrade(int filmId, int userId, int grade);
 }

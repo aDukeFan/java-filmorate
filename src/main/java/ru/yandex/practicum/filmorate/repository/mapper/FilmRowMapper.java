@@ -4,10 +4,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.filmorate.model.Director;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Rating;
+import ru.yandex.practicum.filmorate.model.*;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -63,5 +60,18 @@ public class FilmRowMapper {
                 "JOIN genres_films AS gf " +
                 "ON gf.genre_id = g.id " +
                 "WHERE gf.film_id = ?", genreRowMapper.getMapper(), filmId));
+    }
+
+    private Grade getGradeFromDb(int filmId) {
+        Double totalGrade = template.queryForObject("SELECT ROUND(AVG(grade_value), 1) AS total " +
+                "FROM grades " +
+                "WHERE film_id = ?", Double.class, filmId);
+        if (totalGrade != null) {
+            Grade grade = new Grade().setValue(totalGrade).setPositive(true);
+            if (totalGrade < 5) {
+                grade.setPositive(false);
+            }
+        }
+        return null;
     }
 }
