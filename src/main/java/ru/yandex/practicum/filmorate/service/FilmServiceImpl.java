@@ -51,17 +51,35 @@ public class FilmServiceImpl implements FilmService {
     }
 
     @Override
-    public List<Film> getTopPopularFilms(int count, int genreId, int year) {
+    public List<Film> getTopPopularFilmsByLikes(int count, int genreId, int year) {
         List<Film> top = filmRepository.findAll().stream()
                 .sorted((o1, o2) -> o2.getLikes().size() - o1.getLikes().size())
                 .limit(count)
                 .collect(Collectors.toList());
+        return filterFilmsByGenreOrYear(top, genreId, year);
+    }
 
+    @Override
+    public List<Film> getTopPopularFilmsByGrades(int count, int genreId, int year) {
+        List<Film> top = filmRepository.findAll()
+                .stream().filter(film -> film.getGrade() != null)
+                .sorted((o1, o2) -> Double.compare(o2.getGrade().getValue(), o1.getGrade().getValue()))
+                .collect(Collectors.toList());
+        if (top.size() < count) {
+            top.addAll(filmRepository.findAll().stream()
+                    .filter(film -> film.getGrade() == null)
+                    .collect(Collectors.toList()));
+        }
+        return filterFilmsByGenreOrYear(top.stream().limit(count).collect(Collectors.toList()), genreId, year);
+    }
+
+    private List<Film> filterFilmsByGenreOrYear(List<Film> top, int genreId, int year) {
         if (genreId != 0 || year != 0) {
             return top.stream()
                     .filter(film -> {
                         if (genreId != 0) {
-                            return film.getGenres().stream().anyMatch(genre -> genre.getId() == genreId);
+                            return film.getGenres().stream()
+                                    .anyMatch(genre -> genre.getId() == genreId);
                         } else {
                             return true;
                         }
@@ -78,6 +96,7 @@ public class FilmServiceImpl implements FilmService {
         return top;
     }
 
+
     @Override
     public List<Film> getFilmsByDirector(int id, String typeOfSort) {
         switch (typeOfSort) {
@@ -89,6 +108,14 @@ public class FilmServiceImpl implements FilmService {
                 return filmRepository.getFilmsByDirector(id).stream()
                         .sorted(Comparator.comparingInt(o -> o.getLikes().size()))
                         .collect(Collectors.toList());
+            case "grades":
+                List<Film> result = filmRepository.getFilmsByDirector(id).stream().filter(film -> film.getGrade() != null)
+                    .sorted((o1, o2) -> Double.compare(o2.getGrade().getValue(), o1.getGrade().getValue()))
+                    .collect(Collectors.toList());
+                result.addAll(filmRepository.getFilmsByDirector(id).stream()
+                        .filter(film -> film.getGrade() == null)
+                        .collect(Collectors.toList()));
+                return result;
             default:
                 return filmRepository.getFilmsByDirector(id);
         }
