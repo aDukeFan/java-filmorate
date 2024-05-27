@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.repository.FilmRepository;
 
@@ -118,18 +119,20 @@ public class FilmServiceImpl implements FilmService {
     }
 
     @Override
-    public Film addGrade(int filmId, int userId, int grade) {
-        return null;
+    public Film addGrade(int filmId, int userId, int value) {
+        throwValidationExceptionForBadGradeValue(value);
+        return filmRepository.addGrade(filmId, userId, value);
     }
 
     @Override
-    public Film removeGrade(int filmId, int userId, int grade) {
-        return null;
+    public Film removeGrade(int filmId, int userId) {
+        return filmRepository.removeGrade(filmId, userId);
     }
 
     @Override
-    public Film updateGrade(int filmId, int userId, int grade) {
-        return null;
+    public Film updateGrade(int filmId, int userId, int value) {
+        throwValidationExceptionForBadGradeValue(value);
+        return filmRepository.updateGrade(filmId, userId, value);
     }
 
     private List<Film> getFilmsByTitleQuery(String query) {
@@ -152,5 +155,11 @@ public class FilmServiceImpl implements FilmService {
         result.addAll(matchDirectorFilms);
         result.addAll(matchTitleFilms);
         return result;
+    }
+
+    private void throwValidationExceptionForBadGradeValue(int value) {
+        if (value > 10 || value < 1) {
+            throw new ValidationException("grade must be in 1 to 10 points");
+        }
     }
 }

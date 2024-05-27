@@ -29,7 +29,8 @@ public class FilmRowMapper {
                         .setLikes(getLikesUsersFromDb(rs.getInt("id")))
                         .setGenres(getGenresFromDb(rs.getInt("id")))
                         .setMpa(getRatingFromDb(rs.getInt("id")))
-                        .setDirectors(getDirectorsFromDb(rs.getInt("id"))));
+                        .setDirectors(getDirectorsFromDb(rs.getInt("id")))
+                        .setGrade(getGradeFromDb(rs.getInt("id"))));
     }
 
     private Set<Integer> getLikesUsersFromDb(int filmId) {
@@ -71,6 +72,7 @@ public class FilmRowMapper {
             if (totalGrade < 5) {
                 grade.setPositive(false);
             }
+            return grade;
         }
         return null;
     }

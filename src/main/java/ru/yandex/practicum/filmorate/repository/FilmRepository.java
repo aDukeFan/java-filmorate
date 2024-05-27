@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -154,27 +155,36 @@ public class FilmRepository {
     public Film addGrade(Integer filmId, Integer userId, int value) {
         existChecker.throwNotFountException(filmId, "films");
         existChecker.throwNotFountException(userId, "users");
-        template.update("insert into grades (film_id, user_id, grade_value) values(?, ?, ?)", filmId, userId, value);
-        log.info("add user's '{}' grade {} to film with '{}'", userId, value, filmId);
-        //events.addEvent(userId, "LIKE", filmId, "ADD");
+        if (isGradeSet(userId, filmId)) {
+            throw new ValidationException("Grade by user " + userId + " is already set");
+        }
+        template.update("insert into grades (film_id, user_id, grade_value) values(?, ?, ?)",
+                filmId, userId, value);
+        log.info("add user's '{}' grade {} to film with '{}'",
+                userId, value, filmId);
         return getById(filmId);
     }
 
-    public Film removeGrade(Integer filmId, Integer userId, int value) {
+    public Film removeGrade(Integer filmId, Integer userId) {
         existChecker.throwNotFountException(filmId, "films");
         existChecker.throwNotFountException(userId, "users");
+        if (!isGradeSet(userId, filmId)) {
+            throw new ValidationException("Grade by user " + userId + " is not set");
+        }
         template.update("delete from grades where film_id = ? and user_id = ?", filmId, userId);
-        log.info("remove user's '{}' grade {} from film '{}'", userId, value, filmId);
-        //events.addEvent(userId, "LIKE", filmId, "REMOVE");
+        log.info("remove user's '{}' grade from film '{}'", userId, filmId);
         return getById(filmId);
     }
 
     public Film updateGrade(Integer filmId, Integer userId, int value) {
         existChecker.throwNotFountException(filmId, "films");
         existChecker.throwNotFountException(userId, "users");
-        template.update("update grades set grade_value = ? where film_id = ? and user_id = ?", value, filmId, userId);
+        if (!isGradeSet(userId, filmId)) {
+            throw new ValidationException("Grade by user " + userId + " is not set");
+        }
+        template.update("update grades set grade_value = ? where film_id = ? and user_id = ?",
+                value, filmId, userId);
         log.info("update user's '{}' grade {} from film '{}'", userId, value, filmId);
-        //events.addEvent(userId, "LIKE", filmId, "REMOVE");
         return getById(filmId);
     }
 
@@ -204,5 +214,11 @@ public class FilmRepository {
                 .stream()
                 .map(this::getById)
                 .collect(Collectors.toList());
+    }
+
+    private boolean isGradeSet(int userId, int filmId) {
+        return Boolean.TRUE.equals(template.queryForObject(
+                "select exists (select * from grades where user_id = ? and film_id = ?) as match",
+                (rs, rowNum) -> rs.getBoolean("match"), userId, filmId));
     }
 }

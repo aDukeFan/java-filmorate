@@ -77,21 +77,20 @@ public class FilmController {
     @PostMapping("/{filmId}/grade/{userId}")
     public Film addGrade(@PathVariable int filmId,
                          @PathVariable int userId,
-                         @RequestParam int grade) {
-        return filmService.addGrade(filmId, userId, grade);
+                         @RequestParam int value) {
+        return filmService.addGrade(filmId, userId, value);
     }
 
     @PutMapping("/{filmId}/grade/{userId}")
     public Film updateGrade(@PathVariable int filmId,
                          @PathVariable int userId,
-                         @RequestParam int grade) {
-        return filmService.updateGrade(filmId, userId, grade);
+                         @RequestParam int value) {
+        return filmService.updateGrade(filmId, userId, value);
     }
 
     @DeleteMapping("/{filmId}/grade/{userId}")
     public Film removeGrade(@PathVariable int filmId,
-                            @PathVariable int userId,
-                            @RequestParam int grade) {
-        return filmService.removeGrade(filmId, userId, grade);
+                            @PathVariable int userId) {
+        return filmService.removeGrade(filmId, userId);
     }
 }

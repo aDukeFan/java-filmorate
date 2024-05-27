@@ -39,6 +39,7 @@ public class Film {
     Set<Director> directors = new HashSet<>();
     Set<Genre> genres = new LinkedHashSet<>();
     Set<Integer> likes = new LinkedHashSet<>();
+    Grade grade;
 
     @Override
     public boolean equals(Object o) {
