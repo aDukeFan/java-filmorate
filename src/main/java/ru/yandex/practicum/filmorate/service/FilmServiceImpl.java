@@ -109,9 +109,10 @@ public class FilmServiceImpl implements FilmService {
                         .sorted(Comparator.comparingInt(o -> o.getLikes().size()))
                         .collect(Collectors.toList());
             case "grades":
-                List<Film> result = filmRepository.getFilmsByDirector(id).stream().filter(film -> film.getGrade() != null)
-                    .sorted((o1, o2) -> Double.compare(o2.getGrade().getValue(), o1.getGrade().getValue()))
-                    .collect(Collectors.toList());
+                List<Film> result = filmRepository.getFilmsByDirector(id).stream()
+                        .filter(film -> film.getGrade() != null)
+                        .sorted((o1, o2) -> Double.compare(o2.getGrade().getValue(), o1.getGrade().getValue()))
+                        .collect(Collectors.toList());
                 result.addAll(filmRepository.getFilmsByDirector(id).stream()
                         .filter(film -> film.getGrade() == null)
                         .collect(Collectors.toList()));
