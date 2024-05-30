@@ -28,5 +28,7 @@ public interface UserService {
 
     List<Film> getRecommendFilms(int userId);
 
+    List<Film> getRecommendFilmsByGrades(int userId);
+
     List<Event> getEventsByUserId(Integer id);
 }

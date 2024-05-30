@@ -71,6 +71,11 @@ public class UserController {
         return userService.getRecommendFilms(id);
     }
 
+    @GetMapping("/{id}/best-film")
+    public List<Film> recommendFilmsByGrades(@PathVariable Integer id) {
+        return userService.getRecommendFilmsByGrades(id);
+    }
+
     @GetMapping("/{id}/feed")
     public List<Event> getEventsByUserId(@PathVariable Integer id) {
         return userService.getEventsByUserId(id);

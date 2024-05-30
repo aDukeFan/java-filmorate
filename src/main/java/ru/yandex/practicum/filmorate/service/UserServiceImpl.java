@@ -66,6 +66,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<Film> getRecommendFilmsByGrades(int userId) {
+        int positiveGradeValue = 5;
+        return repository.getRecommendFilmsByGrade(userId, positiveGradeValue);
+    }
+
+
+    @Override
     public List<Event> getEventsByUserId(Integer id) {
         return repository.getEventsByUserId(id);
     }
