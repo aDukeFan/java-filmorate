@@ -28,6 +28,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
+    //@Cacheable("users")
     public User getById(@PathVariable Integer id) {
         return userService.getById(id);
     }

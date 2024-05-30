@@ -10,21 +10,16 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.repository.util.ExistChecker;
 import ru.yandex.practicum.filmorate.repository.mapper.FilmRowMapper;
 import ru.yandex.practicum.filmorate.repository.mapper.UserRowMapper;
+import ru.yandex.practicum.filmorate.repository.util.ExistChecker;
 
 import java.sql.PreparedStatement;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 @Component
 @AllArgsConstructor
@@ -123,49 +118,20 @@ public class UserRepository {
     }
 
     public List<Film> getRecommendations(Integer userId) {
-
-        int userIdFromDb;
-        int filmIdFromDb;
-        Set<Integer> recommendedFilms = new HashSet<>();
-        Map<Integer, HashSet<Integer>> usersAndLikes = new HashMap<>();
-        SqlRowSet request = template.queryForRowSet("select * from likes");
-
-        while (request.next()) {
-            userIdFromDb = request.getInt("user_id");
-            filmIdFromDb = request.getInt("film_id");
-            if (!usersAndLikes.containsKey(userIdFromDb)) {
-                usersAndLikes.put(userIdFromDb, new HashSet<>());
-                usersAndLikes.get(userIdFromDb).add(filmIdFromDb);
-            }
-            usersAndLikes.get(userIdFromDb).add(filmIdFromDb);
-        }
-        Set<Integer> userLikesFilms = usersAndLikes.get(userId);
-
-        for (HashSet<Integer> films : usersAndLikes.values()) {
-            if (films.stream().anyMatch(userLikesFilms::contains)) {
-                recommendedFilms.addAll(films);
-            }
-        }
-        if (!recommendedFilms.isEmpty()) {
-            recommendedFilms.removeAll(userLikesFilms);
-            template.execute("drop table if exists recommended_films");
-            template.execute("create local temporary table recommended_films (id int)");
-
-            for (Integer film : recommendedFilms) {
-                template.update("insert into recommended_films values(?)", film);
-            }
-            List<Film> finalRecommend = template.query(
-                    "select * " +
-                            "from films " +
-                            "where id IN " +
-                            "(select * " +
-                            "from recommended_films)", filmRowMapper.getMapperWithAllParameters());
-
-            template.execute("drop table if exists recommended_films");
-
-            return finalRecommend;
-        }
-        return Collections.emptyList();
+        return template.query("select " +
+                        "distinct f.id as id, " +
+                        "f.name as name, " +
+                        "f.description as description, " +
+                        "f.duration as duration, " +
+                        "f.release as release " +
+                        "from films as f " +
+                        "join likes as l on l.film_id = f.id " +
+                        "where l.user_id in " +
+                        "(select user_id from likes where film_id in " +
+                        "(select film_id from likes where user_id = ?) " +
+                        "and user_id != ? group by user_id) " +
+                        "and l.film_id not in (select film_id from likes where user_id = ?)",
+                filmRowMapper.getMapperWithAllParameters(), userId, userId, userId);
     }
 
     public void delUserById(int userId) {
