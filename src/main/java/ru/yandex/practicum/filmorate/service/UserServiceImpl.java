@@ -7,7 +7,8 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.repository.UserRepository;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -57,20 +58,35 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void delUserById(int userId) {
-         repository.delUserById(userId);
+        repository.delUserById(userId);
     }
 
     @Override
-    public List<Film> getRecommendFilms(int userId) {
-        return repository.getRecommendations(userId);
-    }
-
-    @Override
-    public List<Film> getRecommendFilmsByGrades(int userId) {
+    public List<Film> getRecommendations(int userId, String type) {
+        int countOfAdviser = 10;
         int positiveGradeValue = 5;
-        return repository.getRecommendFilmsByGrade(userId, positiveGradeValue);
+        List<Integer> advisersIds = new ArrayList<>();
+        Set<Film> recommendationsSet = new HashSet<>();
+        switch (type) {
+            case "likes":
+                advisersIds.addAll(repository.getAdvisersIdsByLikes(userId, countOfAdviser));
+                if (!advisersIds.isEmpty()) {
+                    advisersIds.forEach(adviserId -> recommendationsSet.
+                            addAll(repository
+                                    .getRecommendationsFromAdviserByLikes(userId, adviserId)));
+                }
+            case "grades":
+                advisersIds.addAll(repository.getAdvisersIdsByGrades(userId, countOfAdviser));
+                if (!advisersIds.isEmpty()) {
+                    advisersIds.forEach(adviserId -> recommendationsSet
+                            .addAll(repository
+                                    .getRecommendationsFromAdviserByGrades(userId, adviserId, positiveGradeValue)));
+                }
+        }
+        return recommendationsSet.stream()
+                .sorted(Comparator.comparing(Film::getId))
+                .collect(Collectors.toList());
     }
-
 
     @Override
     public List<Event> getEventsByUserId(Integer id) {

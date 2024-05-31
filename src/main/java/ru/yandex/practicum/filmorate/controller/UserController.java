@@ -68,12 +68,12 @@ public class UserController {
 
     @GetMapping("/{id}/recommendations")
     public List<Film> recommendFilms(@PathVariable Integer id) {
-        return userService.getRecommendFilms(id);
+        return userService.getRecommendations(id, "likes");
     }
 
-    @GetMapping("/{id}/best-film")
+    @GetMapping("/{id}/best-recommendations")
     public List<Film> recommendFilmsByGrades(@PathVariable Integer id) {
-        return userService.getRecommendFilmsByGrades(id);
+        return userService.getRecommendations(id, "grades");
     }
 
     @GetMapping("/{id}/feed")

@@ -26,9 +26,7 @@ public interface UserService {
 
     void delUserById(int userId);
 
-    List<Film> getRecommendFilms(int userId);
-
-    List<Film> getRecommendFilmsByGrades(int userId);
+    List<Film> getRecommendations(int userId, String type);
 
     List<Event> getEventsByUserId(Integer id);
 }

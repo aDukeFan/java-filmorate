@@ -117,53 +117,46 @@ public class UserRepository {
                 userId);
     }
 
-    public List<Film> getRecommendations(Integer userId) {
-        boolean isMatchExists = Boolean.TRUE.equals(template.queryForObject("select exists " +
-                "(select user_id from likes where film_id in " +
-                "(select film_id from likes where user_id = ?) and user_id !=?) " +
-                "as match", Boolean.class, userId, userId));
-        if (isMatchExists) {
-            Integer adviserId = template.queryForObject("select user_id from likes " +
-                    "where film_id in " +
-                    "(select film_id from likes where user_id = ?) " +
-                    "and user_id !=? " +
-                    "group by user_id " +
-                    "order by count(*) desc " +
-                    "limit(1)", Integer.class, userId, userId);
-            return template.query("select * from films as f " +
-                            "join likes as l on l.film_id = f.id " +
-                            "where l.user_id = ? " +
-                            "and l.film_id not in " +
-                            "(select film_id from likes where user_id = ?)",
-                    filmRowMapper.getMapperWithAllParameters(), adviserId, userId);
-        } else {
-            return List.of();
-        }
+    public List<Integer> getAdvisersIdsByLikes(int userId, int countOfAdvisers) {
+        return template.query("select user_id from likes " +
+                        "where film_id in " +
+                        "(select film_id from likes where user_id = ?) " +
+                        "and user_id !=? " +
+                        "group by user_id " +
+                        "order by count(*) desc " +
+                        "limit(?)", (rs, rowNum) -> rs.getInt("user_id"),
+                userId, userId, countOfAdvisers);
     }
 
-    public List<Film> getRecommendFilmsByGrade(int userId, int positiveGradeValue) {
-        boolean isMatchExists = Boolean.TRUE.equals(template.queryForObject("select exists " +
-                "(select user_id from grades where grade_value in " +
-                "(select grade_value from grades where user_id = ?) and user_id != ?) " +
-                "as match", Boolean.class, userId, userId));
-        if (isMatchExists) {
-            Integer adviserId = template.queryForObject("select user_id from grades " +
-                    "where grade_value in " +
-                    "(select grade_value from grades where user_id = ?) " +
-                    "and user_id != ? " +
-                    "group by user_id " +
-                    "order by count(*) desc " +
-                    "limit(1)", Integer.class, userId, userId);
-            return template.query("select * from films f " +
-                            "join grades as g on g.film_id = f.id " +
-                            "where g.user_id = ? " +
-                            "and g.film_id not in " +
-                            "(select film_id from grades where user_id = ?) " +
-                            "and g.grade_value > ?",
-                    filmRowMapper.getMapperWithAllParameters(), adviserId, userId, positiveGradeValue);
-        } else {
-            return List.of();
-        }
+    public List<Integer> getAdvisersIdsByGrades(int userId, int countOfAdvisers) {
+        return template.query("select user_id from grades where film_id in " +
+                        "(select film_id from grades where user_id = ?) " +
+                        "and grade_value in " +
+                        "(select grade_value from grades where user_id = ?) " +
+                        "and user_id != ?" +
+                        "group by user_id " +
+                        "order by count(*) desc " +
+                        "limit(?)", (rs, rowNum) -> rs.getInt("user_id"),
+                userId, userId, userId, countOfAdvisers);
+    }
+
+    public List<Film> getRecommendationsFromAdviserByLikes(Integer userId, Integer adviserId) {
+        return template.query("select * from films as f " +
+                        "join likes as l on l.film_id = f.id " +
+                        "where l.user_id = ? " +
+                        "and l.film_id not in " +
+                        "(select film_id from likes where user_id = ?)",
+                filmRowMapper.getMapperWithAllParameters(), adviserId, userId);
+    }
+
+    public List<Film> getRecommendationsFromAdviserByGrades(int userId, int adviserId, int positiveGradeValue) {
+        return template.query("select * from films f " +
+                        "join grades as g on g.film_id = f.id " +
+                        "where g.user_id = ? " +
+                        "and g.film_id not in " +
+                        "(select film_id from grades where user_id = ?) " +
+                        "and g.grade_value > ?",
+                filmRowMapper.getMapperWithAllParameters(), adviserId, userId, positiveGradeValue);
     }
 
     public void delUserById(int userId) {
