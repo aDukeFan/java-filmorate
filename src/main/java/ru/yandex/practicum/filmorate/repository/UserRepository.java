@@ -10,21 +10,16 @@ import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.model.Event;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.repository.util.ExistChecker;
 import ru.yandex.practicum.filmorate.repository.mapper.FilmRowMapper;
 import ru.yandex.practicum.filmorate.repository.mapper.UserRowMapper;
+import ru.yandex.practicum.filmorate.repository.util.ExistChecker;
 
 import java.sql.PreparedStatement;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 @Component
 @AllArgsConstructor
@@ -122,50 +117,46 @@ public class UserRepository {
                 userId);
     }
 
-    public List<Film> getRecommendations(Integer userId) {
+    public List<Integer> getAdvisersIdsByLikes(int userId, int countOfAdvisers) {
+        return template.query("select user_id from likes " +
+                        "where film_id in " +
+                        "(select film_id from likes where user_id = ?) " +
+                        "and user_id !=? " +
+                        "group by user_id " +
+                        "order by count(*) desc " +
+                        "limit(?)", (rs, rowNum) -> rs.getInt("user_id"),
+                userId, userId, countOfAdvisers);
+    }
 
-        int userIdFromDb;
-        int filmIdFromDb;
-        Set<Integer> recommendedFilms = new HashSet<>();
-        Map<Integer, HashSet<Integer>> usersAndLikes = new HashMap<>();
-        SqlRowSet request = template.queryForRowSet("select * from likes");
+    public List<Integer> getAdvisersIdsByGrades(int userId, int countOfAdvisers) {
+        return template.query("select user_id from grades where film_id in " +
+                        "(select film_id from grades where user_id = ?) " +
+                        "and grade_value in " +
+                        "(select grade_value from grades where user_id = ?) " +
+                        "and user_id != ?" +
+                        "group by user_id " +
+                        "order by count(*) desc " +
+                        "limit(?)", (rs, rowNum) -> rs.getInt("user_id"),
+                userId, userId, userId, countOfAdvisers);
+    }
 
-        while (request.next()) {
-            userIdFromDb = request.getInt("user_id");
-            filmIdFromDb = request.getInt("film_id");
-            if (!usersAndLikes.containsKey(userIdFromDb)) {
-                usersAndLikes.put(userIdFromDb, new HashSet<>());
-                usersAndLikes.get(userIdFromDb).add(filmIdFromDb);
-            }
-            usersAndLikes.get(userIdFromDb).add(filmIdFromDb);
-        }
-        Set<Integer> userLikesFilms = usersAndLikes.get(userId);
+    public List<Film> getRecommendationsFromAdviserByLikes(Integer userId, Integer adviserId) {
+        return template.query("select * from films as f " +
+                        "join likes as l on l.film_id = f.id " +
+                        "where l.user_id = ? " +
+                        "and l.film_id not in " +
+                        "(select film_id from likes where user_id = ?)",
+                filmRowMapper.getMapperWithAllParameters(), adviserId, userId);
+    }
 
-        for (HashSet<Integer> films : usersAndLikes.values()) {
-            if (films.stream().anyMatch(userLikesFilms::contains)) {
-                recommendedFilms.addAll(films);
-            }
-        }
-        if (!recommendedFilms.isEmpty()) {
-            recommendedFilms.removeAll(userLikesFilms);
-            template.execute("drop table if exists recommended_films");
-            template.execute("create local temporary table recommended_films (id int)");
-
-            for (Integer film : recommendedFilms) {
-                template.update("insert into recommended_films values(?)", film);
-            }
-            List<Film> finalRecommend = template.query(
-                    "select * " +
-                            "from films " +
-                            "where id IN " +
-                            "(select * " +
-                            "from recommended_films)", filmRowMapper.getMapperWithAllParameters());
-
-            template.execute("drop table if exists recommended_films");
-
-            return finalRecommend;
-        }
-        return Collections.emptyList();
+    public List<Film> getRecommendationsFromAdviserByGrades(int userId, int adviserId, int positiveGradeValue) {
+        return template.query("select * from films f " +
+                        "join grades as g on g.film_id = f.id " +
+                        "where g.user_id = ? " +
+                        "and g.film_id not in " +
+                        "(select film_id from grades where user_id = ?) " +
+                        "and g.grade_value > ?",
+                filmRowMapper.getMapperWithAllParameters(), adviserId, userId, positiveGradeValue);
     }
 
     public void delUserById(int userId) {

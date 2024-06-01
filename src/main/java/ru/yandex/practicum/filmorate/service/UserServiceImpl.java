@@ -7,13 +7,18 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.repository.UserRepository;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private UserRepository repository;
+
+    public static final int COUNT_OF_ADVISER = 10;
+    public static final int POSITIVE_GRADE_VALUE = 5;
+
 
     @Override
     public User create(User user) {
@@ -57,12 +62,32 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void delUserById(int userId) {
-         repository.delUserById(userId);
+        repository.delUserById(userId);
     }
 
     @Override
-    public List<Film> getRecommendFilms(int userId) {
-        return repository.getRecommendations(userId);
+    public List<Film> getRecommendations(int userId, String type) {
+        List<Integer> advisersIds = new ArrayList<>();
+        Set<Film> recommendationsSet = new HashSet<>();
+        switch (type) {
+            case "likes":
+                advisersIds.addAll(repository.getAdvisersIdsByLikes(userId, COUNT_OF_ADVISER));
+                if (!advisersIds.isEmpty()) {
+                    advisersIds.forEach(adviserId -> recommendationsSet.
+                            addAll(repository
+                                    .getRecommendationsFromAdviserByLikes(userId, adviserId)));
+                }
+            case "grades":
+                advisersIds.addAll(repository.getAdvisersIdsByGrades(userId, COUNT_OF_ADVISER));
+                if (!advisersIds.isEmpty()) {
+                    advisersIds.forEach(adviserId -> recommendationsSet
+                            .addAll(repository
+                                    .getRecommendationsFromAdviserByGrades(userId, adviserId, POSITIVE_GRADE_VALUE)));
+                }
+        }
+        return recommendationsSet.stream()
+                .sorted(Comparator.comparing(Film::getId))
+                .collect(Collectors.toList());
     }
 
     @Override

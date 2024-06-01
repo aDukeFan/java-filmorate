@@ -48,10 +48,17 @@ public class FilmController {
     }
 
     @GetMapping("popular") //Если значение параметра count не задано, верните первые 10.
-    public List<Film> findTopPopularFilms(@RequestParam(required = false, defaultValue = "10") int count,
+    public List<Film> findTopPopularFilmsByLikes(@RequestParam(required = false, defaultValue = "10") int count,
                                           @RequestParam(required = false, defaultValue = "0") int genreId,
                                           @RequestParam(required = false, defaultValue = "0") int year) {
-        return filmService.getTopPopularFilms(count, genreId, year);
+        return filmService.getTopPopularFilmsByLikes(count, genreId, year);
+    }
+
+    @GetMapping("best") //Если значение параметра count не задано, верните первые 10.
+    public List<Film> findTopPopularFilmsByGrades(@RequestParam(required = false, defaultValue = "10") int count,
+                                          @RequestParam(required = false, defaultValue = "0") int genreId,
+                                          @RequestParam(required = false, defaultValue = "0") int year) {
+        return filmService.getTopPopularFilmsByGrades(count, genreId, year);
     }
 
     @GetMapping("/director/{directorId}")
@@ -72,5 +79,25 @@ public class FilmController {
     @GetMapping("common")
     public List<Film> getCommonFilms(@RequestParam int userId, @RequestParam int friendId) {
         return filmService.getCommonFilms(userId, friendId);
+    }
+
+    @PostMapping("/{filmId}/grade/{userId}")
+    public Film addGrade(@PathVariable int filmId,
+                         @PathVariable int userId,
+                         @RequestParam int value) {
+        return filmService.addGrade(filmId, userId, value);
+    }
+
+    @PutMapping("/{filmId}/grade/{userId}")
+    public Film updateGrade(@PathVariable int filmId,
+                         @PathVariable int userId,
+                         @RequestParam int value) {
+        return filmService.updateGrade(filmId, userId, value);
+    }
+
+    @DeleteMapping("/{filmId}/grade/{userId}")
+    public Film removeGrade(@PathVariable int filmId,
+                            @PathVariable int userId) {
+        return filmService.removeGrade(filmId, userId);
     }
 }

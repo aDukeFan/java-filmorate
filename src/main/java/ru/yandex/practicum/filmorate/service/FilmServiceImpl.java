@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.repository.FilmRepository;
 
@@ -50,17 +51,35 @@ public class FilmServiceImpl implements FilmService {
     }
 
     @Override
-    public List<Film> getTopPopularFilms(int count, int genreId, int year) {
+    public List<Film> getTopPopularFilmsByLikes(int count, int genreId, int year) {
         List<Film> top = filmRepository.findAll().stream()
                 .sorted((o1, o2) -> o2.getLikes().size() - o1.getLikes().size())
                 .limit(count)
                 .collect(Collectors.toList());
+        return filterFilmsByGenreOrYear(top, genreId, year);
+    }
 
+    @Override
+    public List<Film> getTopPopularFilmsByGrades(int count, int genreId, int year) {
+        List<Film> top = filmRepository.findAll()
+                .stream().filter(film -> film.getGrade() != null)
+                .sorted((o1, o2) -> Double.compare(o2.getGrade().getValue(), o1.getGrade().getValue()))
+                .collect(Collectors.toList());
+        if (top.size() < count) {
+            top.addAll(filmRepository.findAll().stream()
+                    .filter(film -> film.getGrade() == null)
+                    .collect(Collectors.toList()));
+        }
+        return filterFilmsByGenreOrYear(top.stream().limit(count).collect(Collectors.toList()), genreId, year);
+    }
+
+    private List<Film> filterFilmsByGenreOrYear(List<Film> top, int genreId, int year) {
         if (genreId != 0 || year != 0) {
             return top.stream()
                     .filter(film -> {
                         if (genreId != 0) {
-                            return film.getGenres().stream().anyMatch(genre -> genre.getId() == genreId);
+                            return film.getGenres().stream()
+                                    .anyMatch(genre -> genre.getId() == genreId);
                         } else {
                             return true;
                         }
@@ -77,6 +96,7 @@ public class FilmServiceImpl implements FilmService {
         return top;
     }
 
+
     @Override
     public List<Film> getFilmsByDirector(int id, String typeOfSort) {
         switch (typeOfSort) {
@@ -88,6 +108,15 @@ public class FilmServiceImpl implements FilmService {
                 return filmRepository.getFilmsByDirector(id).stream()
                         .sorted(Comparator.comparingInt(o -> o.getLikes().size()))
                         .collect(Collectors.toList());
+            case "grades":
+                List<Film> result = filmRepository.getFilmsByDirector(id).stream()
+                        .filter(film -> film.getGrade() != null)
+                        .sorted((o1, o2) -> Double.compare(o2.getGrade().getValue(), o1.getGrade().getValue()))
+                        .collect(Collectors.toList());
+                result.addAll(filmRepository.getFilmsByDirector(id).stream()
+                        .filter(film -> film.getGrade() == null)
+                        .collect(Collectors.toList()));
+                return result;
             default:
                 return filmRepository.getFilmsByDirector(id);
         }
@@ -117,6 +146,23 @@ public class FilmServiceImpl implements FilmService {
         return filmRepository.getCommonFilms(userId, friendId);
     }
 
+    @Override
+    public Film addGrade(int filmId, int userId, int value) {
+        throwValidationExceptionForBadGradeValue(value);
+        return filmRepository.addGrade(filmId, userId, value);
+    }
+
+    @Override
+    public Film removeGrade(int filmId, int userId) {
+        return filmRepository.removeGrade(filmId, userId);
+    }
+
+    @Override
+    public Film updateGrade(int filmId, int userId, int value) {
+        throwValidationExceptionForBadGradeValue(value);
+        return filmRepository.updateGrade(filmId, userId, value);
+    }
+
     private List<Film> getFilmsByTitleQuery(String query) {
         return filmRepository.findAll().stream()
                 .filter(film -> film.getName().toLowerCase().contains(query.toLowerCase()))
@@ -137,5 +183,11 @@ public class FilmServiceImpl implements FilmService {
         result.addAll(matchDirectorFilms);
         result.addAll(matchTitleFilms);
         return result;
+    }
+
+    private void throwValidationExceptionForBadGradeValue(int value) {
+        if (value > 10 || value < 1) {
+            throw new ValidationException("grade must be in 1 to 10 points");
+        }
     }
 }

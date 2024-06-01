@@ -28,6 +28,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
+    //@Cacheable("users")
     public User getById(@PathVariable Integer id) {
         return userService.getById(id);
     }
@@ -67,7 +68,12 @@ public class UserController {
 
     @GetMapping("/{id}/recommendations")
     public List<Film> recommendFilms(@PathVariable Integer id) {
-        return userService.getRecommendFilms(id);
+        return userService.getRecommendations(id, "likes");
+    }
+
+    @GetMapping("/{id}/best-recommendations")
+    public List<Film> recommendFilmsByGrades(@PathVariable Integer id) {
+        return userService.getRecommendations(id, "grades");
     }
 
     @GetMapping("/{id}/feed")
