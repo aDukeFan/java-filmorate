@@ -16,6 +16,10 @@ public class UserServiceImpl implements UserService {
 
     private UserRepository repository;
 
+    public static final int COUNT_OF_ADVISER = 10;
+    public static final int POSITIVE_GRADE_VALUE = 5;
+
+
     @Override
     public User create(User user) {
         return repository.create(user);
@@ -63,24 +67,22 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<Film> getRecommendations(int userId, String type) {
-        int countOfAdviser = 10;
-        int positiveGradeValue = 5;
         List<Integer> advisersIds = new ArrayList<>();
         Set<Film> recommendationsSet = new HashSet<>();
         switch (type) {
             case "likes":
-                advisersIds.addAll(repository.getAdvisersIdsByLikes(userId, countOfAdviser));
+                advisersIds.addAll(repository.getAdvisersIdsByLikes(userId, COUNT_OF_ADVISER));
                 if (!advisersIds.isEmpty()) {
                     advisersIds.forEach(adviserId -> recommendationsSet.
                             addAll(repository
                                     .getRecommendationsFromAdviserByLikes(userId, adviserId)));
                 }
             case "grades":
-                advisersIds.addAll(repository.getAdvisersIdsByGrades(userId, countOfAdviser));
+                advisersIds.addAll(repository.getAdvisersIdsByGrades(userId, COUNT_OF_ADVISER));
                 if (!advisersIds.isEmpty()) {
                     advisersIds.forEach(adviserId -> recommendationsSet
                             .addAll(repository
-                                    .getRecommendationsFromAdviserByGrades(userId, adviserId, positiveGradeValue)));
+                                    .getRecommendationsFromAdviserByGrades(userId, adviserId, POSITIVE_GRADE_VALUE)));
                 }
         }
         return recommendationsSet.stream()
